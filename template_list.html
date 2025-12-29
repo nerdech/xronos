@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テンプレート選択</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="top-left-button">
+        <button class="back-button" onclick="location.href='index.html'">戻る</button>
+    </div>
+
+    <h1>データ変換</h1>
+
+    <div class="card">
+      <div class="template-list-container">
+        <p style="font-weight:bold; margin-bottom:10px;">テンプレートを選択</p>
+        <button class="btn-gray" onclick="location.href='templates.html'">新規作成</button>
+
+        <table class="template-list-table">
+          <tbody id="templateTableBody">
+            </tbody>
+        </table>
+        
+        <p id="noDataMessage" style="color:#999; margin-top:20px; text-align:center; display:none;">
+          テンプレートがありません
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const templates = await window.api.getTemplates();
+      const tbody = document.getElementById('templateTableBody');
+      const noData = document.getElementById('noDataMessage');
+
+      tbody.innerHTML = "";
+
+      if (templates.length === 0) {
+        noData.style.display = "block";
+      } else {
+        noData.style.display = "none";
+        templates.forEach(t => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${t.name}</td>
+            <td class="action-cell">
+              <div class="btn-group">
+                <button class="btn-action" onclick="editTemplate('${t.id}')">編集</button>
+                <button class="btn-action" onclick="deleteTemplate('${t.id}')">削除</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    });
+
+    async function deleteTemplate(id) {
+      if(confirm('本当に削除しますか？')) { 
+        await window.api.deleteTemplate(id);
+        location.reload();
+      }
+    }
+
+    // ▼▼▼ 修正：編集画面へ遷移（IDをURLパラメータとして渡す） ▼▼▼
+    function editTemplate(id) {
+      location.href = 'templates.html?id=' + id;
+    }
+</script>
+</body>
+</html>

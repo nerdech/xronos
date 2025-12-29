@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>自動スケジュール設定</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 複数行に対応するためのスタイル調整 */
+    .timing-block {
+      border-top: 1px dashed #ccc;
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+    .timing-block:first-child {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
+    }
+    .btn-add-timing {
+      background-color: #fff;
+      border: 1px dashed #333;
+      padding: 8px 15px;
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-add-timing:hover {
+      background-color: #f0f0f0;
+    }
+
+    /* レイアウト崩れ防止用（削除ボタンと被らないように） */
+    .schedule-box {
+      border: 1px solid #999;
+      background-color: #E0E0E0;
+      padding: 15px;
+      margin-bottom: 20px;
+      position: static;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .schedule-settings-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .schedule-action-area {
+      display: flex;
+      align-items: flex-end;
+    }
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0;
+    }
+    .schedule-row label {
+      width: auto;
+      min-width: 60px;
+      margin-bottom: 0;
+      margin-right: 15px;
+      font-weight: bold;
+    }
+    .btn-delete-schedule {
+      position: static;
+      white-space: nowrap;
+      padding: 8px 15px;
+      height: fit-content;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-left-button">
+        <button class="back-button" onclick="location.href='index.html'">戻る</button>
+    </div>
+
+    <h1>自動スケジュール設定</h1>
+
+    <div class="card">
+      <div class="form-group">
+        <label>スケジュール名</label>
+        <input type="text" id="scheduleName" placeholder="名前を入力" style="background-color:#fff;">
+      </div>
+      <div class="form-group">
+        <label>入力ファイル（フォルダ）</label>
+        <div class="input-row">
+            <input type="text" id="inputFolder" readonly placeholder="フォルダを選択" style="background-color:#E0E0E0; cursor:pointer;">
+            <button class="btn-gray" onclick="document.getElementById('inputFolder').click()">選択</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>出力フォルダ</label>
+        <div class="input-row">
+            <input type="text" id="outputFolder" readonly placeholder="出力先を選択" style="background-color:#E0E0E0; cursor:pointer;">
+            <button class="btn-gray" onclick="document.getElementById('outputFolder').click()">選択</button>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>処理後の元ファイル</label>
+        
+        <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer;">
+            <input type="checkbox" id="checkAutoDelete" style="width:20px; height:20px; margin-right:10px;">
+            処理が終わったら自動的に削除する
+        </label>
+
+        <div id="moveFolderArea" style="display:block; margin-left:30px;">
+            <label style="font-weight:normal; font-size:14px; margin-bottom:5px;">削除しない場合の移動先（空欄なら何もしない）：</label>
+            <div class="input-row">
+                <input type="text" id="moveFolder" readonly placeholder="移動先フォルダを選択" style="background-color:#E0E0E0; cursor:pointer;">
+                <button class="btn-gray" onclick="document.getElementById('moveFolder').click()">選択</button>
+            </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <label style="margin-bottom:10px;">実行条件設定</label>
+
+      <div id="timingsContainer">
+        </div>
+      
+      <button class="btn-add-timing" id="btnAddTiming">＋ スケジュール（実行条件）を追加</button>
+
+      <div style="text-align: right; margin-top: 30px;">
+        <button id="btnConfirm" class="btn-gray" style="margin-right: 10px; font-weight:bold;">確定（保存）</button>
+        <button class="btn-gray" onclick="location.href='index.html'">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 最初のタイミング設定ブロックを1つ追加
+      addTimingBlock(); 
+    });
+
+    // フォルダ選択処理
+    document.getElementById('inputFolder').addEventListener('click', async (e) => {
+      const path = await window.api.selectFolder();
+      if(path) document.getElementById('inputFolder').value = path;
+    });
+    document.getElementById('outputFolder').addEventListener('click', async (e) => {
+      const path = await window.api.selectFolder();
+      if(path) document.getElementById('outputFolder').value = path;
+    });
+
+    // ▼▼▼ 処理後オプションの制御 ▼▼▼
+    const checkAutoDelete = document.getElementById('checkAutoDelete');
+    const moveFolderArea = document.getElementById('moveFolderArea');
+    const moveFolderInput = document.getElementById('moveFolder');
+
+    checkAutoDelete.addEventListener('change', () => {
+      if(checkAutoDelete.checked) {
+        moveFolderArea.style.opacity = "0.5";
+        moveFolderArea.style.pointerEvents = "none";
+        moveFolderInput.value = "";
+      } else {
+        moveFolderArea.style.opacity = "1";
+        moveFolderArea.style.pointerEvents = "auto";
+      }
+    });
+
+    moveFolderInput.addEventListener('click', async () => {
+      const path = await window.api.selectFolder();
+      if(path) moveFolderInput.value = path;
+    });
+
+
+    // ▼▼▼ タイミング設定ブロック制御 ▼▼▼
+    let timingCounter = 0;
+
+    function addTimingBlock() {
+      timingCounter++;
+      const container = document.getElementById('timingsContainer');
+      const uniqueName = `freq_${timingCounter}`;
+
+      const div = document.createElement('div');
+      div.className = 'timing-block';
+      div.innerHTML = `
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>日次選択</label>
+          <div class="radio-group" style="margin-bottom: 0;">
+            <label><input type="radio" name="${uniqueName}" value="weekly" checked onchange="updateDateOptions(this)"> 週次</label>
+            <label style="margin-left: 20px;"><input type="radio" name="${uniqueName}" value="monthly" onchange="updateDateOptions(this)"> 月次</label>
+          </div>
+        </div>
+
+        <div class="schedule-box">
+          <div class="schedule-settings-area">
+              <div class="schedule-row">
+                  <label>曜日：</label>
+                  <select class="date-select" style="background:#fff; margin-right:10px; width: 120px; padding: 5px;"></select>
+                  <input type="time" class="time-input" value="09:00" style="background:#fff; width: 100px; padding: 5px;">
+              </div>
+          </div>
+          <div class="schedule-action-area">
+              <button class="btn-gray btn-delete-schedule" onclick="removeTimingBlock(this)">削除</button>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(div);
+      const newRadio = div.querySelector(`input[name="${uniqueName}"][value="weekly"]`);
+      updateDateOptions(newRadio);
+    }
+
+    function removeTimingBlock(btn) {
+      const container = document.getElementById('timingsContainer');
+      if (container.children.length > 1) {
+        btn.closest('.timing-block').remove();
+      } else {
+        alert("実行条件は最低1つ必要です。");
+      }
+    }
+
+    document.getElementById('btnAddTiming').addEventListener('click', addTimingBlock);
+
+    window.updateDateOptions = function(radio) {
+      const block = radio.closest('.timing-block');
+      const type = radio.value;
+      const dateSelect = block.querySelector('.date-select');
+      const label = block.querySelector('.schedule-row label');
+      
+      dateSelect.innerHTML = ''; 
+
+      if(type === 'weekly') {
+        label.textContent = "曜日：";
+        ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"].forEach(w => {
+          const opt = document.createElement('option');
+          opt.text = w;
+          dateSelect.add(opt);
+        });
+      } else {
+        label.textContent = "日付：";
+        for(let i=1; i<=31; i++) {
+          const opt = document.createElement('option');
+          opt.text = i + "日";
+          dateSelect.add(opt);
+        }
+        const opt = document.createElement('option');
+        opt.text = "月末";
+        dateSelect.add(opt);
+      }
+    }
+
+
+    // ▼▼▼ 保存処理 ▼▼▼
+    document.getElementById('btnConfirm').addEventListener('click', async () => {
+      const name = document.getElementById('scheduleName').value;
+      const input = document.getElementById('inputFolder').value;
+      const output = document.getElementById('outputFolder').value;
+
+      // テンプレートを自動的に取得（一つのみの運用）
+      const templates = await window.api.getTemplates();
+      if (!templates || templates.length === 0) {
+        alert("テンプレートが設定されていません。テンプレート設定画面から設定してください。");
+        return;
+      }
+      const tmpl = templates[0].id;
+
+      // オプション値
+      const deleteAfter = checkAutoDelete.checked;
+      const movePath = moveFolderInput.value;
+
+      if(!name || !input || !output) {
+        alert("必須項目を入力してください");
+        return;
+      }
+
+      const timingBlocks = document.querySelectorAll('.timing-block');
+      const timingsList = [];
+
+      timingBlocks.forEach(block => {
+        const checkedRadio = block.querySelector('input[type="radio"]:checked');
+        timingsList.push({
+          type: checkedRadio.value,
+          date: block.querySelector('.date-select').value,
+          time: block.querySelector('.time-input').value
+        });
+      });
+
+      const scheduleData = {
+        name: name,
+        inputFolder: input,
+        outputFolder: output,
+        templateId: tmpl,
+        timings: timingsList,
+        active: true,
+        postProcess: {
+          deleteAfter: deleteAfter,
+          moveFolder: movePath
+        }
+      };
+
+      const res = await window.api.saveSchedule(scheduleData);
+      if(res.success) {
+        alert("スケジュールを保存しました");
+        location.href = 'index.html';
+      } else {
+        alert("保存エラー: " + res.error);
+      }
+    });
+  </script>
+</body>
+</html>

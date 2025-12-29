@@ -1,0 +1,443 @@
+/* src/styles.css */
+
+/* --- 全体の設定 --- */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #FFF8E1; /* クリーム色 */
+  /* ▼▼▼ ここをゴシック体に戻しました ▼▼▼ */
+  font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  color: #333;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+}
+
+h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-weight: normal;
+}
+
+/* 戻るボタン */
+.top-left-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.back-button {
+  background-color: #C0C0C0;
+  border: 1px solid #333;
+  padding: 5px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #000;
+}
+
+.back-button::before {
+  content: "← ";
+  margin-right: 5px;
+}
+
+/* カード（白い枠） */
+.card {
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 50px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  min-height: 400px;
+  box-sizing: border-box;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+/* 汎用入力欄 */
+input[type="text"],
+input[type="time"],
+select,
+.readonly-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #999;
+  background-color: #E0E0E0;
+  box-sizing: border-box;
+  border-radius: 0;
+  margin-bottom: 10px;
+}
+
+/* ボタン */
+button.btn-gray {
+  background-color: #C0C0C0;
+  border: 1px solid #999;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 0;
+  height: 46px;
+  box-sizing: border-box;
+}
+button.btn-gray:hover {
+  background-color: #B0B0B0;
+}
+
+.input-row {
+  display: flex;
+  gap: 15px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #999;
+  margin: 40px 0 30px 0;
+}
+
+/* --- テンプレート管理画面 (templates.html) 専用スタイル --- */
+
+/* 入力欄の横並びコンテナ */
+.template-header-inputs {
+  display: flex !important;       /* 強制的にFlexbox */
+  flex-direction: row !important; /* 強制的に横方向 */
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* このコンテナ内の入力欄の設定 */
+.template-header-inputs input[type="text"] {
+  width: auto !important; /* 全体設定の100%を打ち消す */
+  margin-bottom: 0 !important;
+  height: 40px;
+}
+
+/* 1. テンプレート名（左側・白） */
+.template-header-inputs input:first-child {
+  flex: 3; /* 比率3 */
+  background-color: #fff;
+}
+
+/* 2. ファイル選択（右側・グレー） */
+/* IDで指定して確実に適用 */
+#filePath {
+  flex: 2; /* 比率2 */
+  background-color: #E0E0E0;
+  cursor: pointer;
+}
+
+
+/* 左右パネルレイアウト */
+.split-view {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+  align-items: flex-start;
+}
+.left-panel, .right-panel { flex: 1; }
+
+.panel-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* 左側：リストデザイン */
+.source-table-header {
+  display: flex;
+  background-color: #E0E0E0;
+  border: 1px solid #999;
+  border-bottom: none;
+  font-weight: bold;
+  text-align: center;
+}
+.source-table-header div {
+  flex: 1;
+  padding: 8px 0;
+  border-right: 1px solid #999;
+}
+.source-table-header div:last-child { border-right: none; }
+
+.source-list-container {
+  border: 1px solid #999;
+  background-color: #fff;
+  min-height: 250px;
+}
+
+.draggable-row {
+  display: flex;
+  border-bottom: 1px solid #999;
+  cursor: grab;
+  background-color: #fff;
+}
+.draggable-row:hover { background-color: #e3f2fd; }
+.draggable-row div {
+  flex: 1;
+  padding: 8px 5px;
+  border-right: 1px solid #999;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+.draggable-row div:last-child { border-right: none; }
+
+/* 右側：マッピングデザイン */
+.preview-header-box {
+  background-color: #E0E0E0;
+  border: 1px solid #999;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.mapping-container {
+  background-color: #F5F5F5;
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapped-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  height: 40px;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.item-yellow { background-color: #FFF59D; border-color: #FBC02D; }
+.item-orange { background-color: #FFCC80; border-color: #FB8C00; }
+.item-blue   { background-color: #90CAF9; border-color: #1E88E5; }
+
+.mapped-label { font-weight: bold; flex: 1; }
+.mapped-settings { display: flex; gap: 5px; align-items: center; }
+.mapped-settings select {
+  height: 26px;
+  padding: 0 5px;
+  font-size: 12px;
+  border: 1px solid #999;
+  background-color: rgba(255,255,255,0.8);
+  width: auto !important;
+}
+
+.btn-mini {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+  padding: 0 5px;
+}
+
+/* --- 他画面用のスタイル --- */
+.template-list-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.template-list-table td { border: 1px solid #999; padding: 10px; background-color: #E0E0E0; }
+.template-list-table .action-cell { width: 120px; padding: 0; }
+.template-list-table .btn-group { display: flex; height: 100%; }
+.template-list-table .btn-action { flex: 1; border: none; border-left: 1px solid #999; background-color: #C0C0C0; cursor: pointer; padding: 10px 0; font-size: 14px; }
+.template-list-table .btn-action:first-child { border-left: none; }
+
+.radio-group { display: flex; gap: 30px; margin-bottom: 15px; }
+.schedule-box { border: 1px solid #999; background-color: #E0E0E0; padding: 15px; position: relative; margin-bottom: 20px; }
+.schedule-row { display: flex; align-items: center; margin-bottom: 10px; }
+.schedule-row label { width: 80px; margin-bottom: 0; }
+.btn-delete-schedule { position: absolute; bottom: 15px; right: 15px; }
+
+.tab-container { border-bottom: 2px solid #333; margin-bottom: 20px; text-align: left; margin-left: 20px; }
+.tab-button { background-color: transparent; border: none; font-size: 18px; font-weight: bold; padding: 10px 20px; cursor: pointer; color: #999; margin-right: 10px; position: relative; top: 2px; }
+.tab-button.active { color: #000; border-bottom: 2px solid #000; }
+.manage-table { width: 100%; border-collapse: collapse; background-color: #fff; }
+.manage-table th, .manage-table td { border: 1px solid #999; padding: 15px; text-align: center; }
+.manage-table th { background-color: #fff; font-weight: normal; border-bottom: 2px solid #000; }
+.btn-delete-row { padding: 5px 15px; font-size: 14px; }
+.status-error { color: red; }
+
+.result-box { border: 1px solid #999; background-color: #E0E0E0; padding: 30px; height: 300px; width: 80%; margin: 20px auto; overflow-y: auto; text-align: left; font-family: monospace; white-space: pre; }
+.result-message { text-align: right; width: 80%; margin: 20px auto 0; font-size: 18px; }
+.result-footer { text-align: right; width: 80%; margin: 20px auto 0; }
+
+/* =========================================
+   テンプレート設定画面 (templates.html) 専用スタイル
+   ========================================= */
+
+/* 白いカードエリア（画面一杯に使うためサイズ調整） */
+.main-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  min-height: 600px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+/* --- 上部エリアレイアウト --- */
+.top-area {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.left-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 45%;
+}
+
+.control-row {
+  display: flex;
+  gap: 10px;
+}
+
+.input-box {
+  background-color: #D3D3D3; /* グレー背景 */
+  border: 2px solid #333;
+  padding: 8px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-action {
+  background-color: #D3D3D3;
+  border: 2px solid #333;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  flex: 1;
+  text-align: center;
+}
+.btn-action:hover {
+  background-color: #C0C0C0;
+}
+/* アクティブ時のスタイルが必要な場合 */
+.btn-action:active {
+  background-color: #A9A9A9;
+}
+
+/* --- 右上プレビューエリア --- */
+.right-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 45%;
+}
+
+.preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preview-label {
+  width: 80px;
+  text-align: right;
+  font-size: 16px;
+  font-weight: bold;
+}
+.preview-box {
+  background-color: #D3D3D3;
+  border: 2px solid #333;
+  padding: 8px;
+  flex: 1;
+  min-height: 24px;
+  font-family: monospace;
+}
+/* ドロップ可能時のハイライト */
+.drop-target-active {
+  border-color: #2196F3 !important;
+  background-color: #E3F2FD !important;
+}
+
+/* --- グリッドエリア (左右の表) --- */
+.grid-area {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.grid-left, .grid-right {
+  width: 48%;
+}
+
+/* テーブル共通設定 (この画面内のみ適用されるよう階層指定も可) */
+.grid-area table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.grid-area th {
+  background-color: #D3D3D3;
+  border: 1px solid #fff;
+  padding: 8px;
+  text-align: left;
+  font-weight: bold;
+}
+.grid-area td {
+  background-color: #E0E0E0; /* デフォルトは薄いグレー */
+  border: 1px solid #fff;
+  padding: 8px;
+  height: 25px;
+}
+/* 偶数行の色変え */
+.grid-area tr:nth-child(even) td {
+  background-color: #E8E8E8;
+}
+
+/* 左側グリッド (ドラッグ元) */
+.source-row {
+  cursor: grab;
+}
+.source-row:active {
+  cursor: grabbing;
+}
+.source-row input {
+  width: 90%;
+  padding: 2px;
+  border: 1px solid #999;
+}
+
+/* 紐付け済みセルのハイライト */
+.mapped-cell {
+  background-color: #A5D6A7 !important; /* 緑系 */
+}
+
+/* --- 下部エリア --- */
+.bottom-area {
+  text-align: right;
+  margin-top: 20px;
+}
+.btn-apply {
+  background-color: #A9A9A9;
+  border: 2px solid #333;
+  padding: 8px 30px;
+  font-size: 18px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-apply:hover {
+  background-color: #999;
+}

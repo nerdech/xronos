@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>データ変換完了</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* プレビュー画面専用のスタイル */
+    .preview-box {
+      background-color: #E0E0E0; /* グレーの背景 */
+      border: 1px solid #333;
+      padding: 20px;
+      height: 300px;
+      width: 80%;
+      margin: 0 auto 30px auto; /* 中央寄せ */
+      overflow-y: auto; /* 文字が多い場合はスクロール */
+      text-align: left;
+      font-family: monospace; /* 等幅フォントで見やすく */
+      white-space: pre; /* 改行をそのまま表示 */
+    }
+
+    .message-area {
+      text-align: right;
+      width: 80%;
+      margin: 0 auto;
+    }
+
+    .btn-home {
+      padding: 5px 15px;
+      font-size: 16px;
+      background-color: #ccc;
+      border: 1px solid #999;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>データ変換</h1>
+
+    <div class="card">
+      
+      <div id="previewArea" class="preview-box">
+        データ読み込み中...
+      </div>
+
+      <div class="message-area">
+        <p style="margin-bottom: 10px;">データ変換が完了しました。</p>
+        <button class="btn-home" onclick="location.href='index.html'">ホーム画面へ戻る</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // 画面が開かれたら、localStorageからプレビューデータを取り出して表示
+    document.addEventListener('DOMContentLoaded', () => {
+      const previewData = localStorage.getItem('conversionPreview');
+      const previewBox = document.getElementById('previewArea');
+      
+      if (previewData) {
+        previewBox.textContent = previewData;
+      } else {
+        previewBox.textContent = "プレビューデータがありません。";
+      }
+    });
+  </script>
+</body>
+</html>

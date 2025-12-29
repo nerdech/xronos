@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>書式設定</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .settings-section {
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid #ccc;
+    }
+    .settings-section:last-child {
+      border-bottom: none;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .setting-item {
+      margin-bottom: 20px;
+    }
+    .setting-label {
+      font-weight: bold;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .code-mapping-list {
+      border: 1px solid #999;
+      background-color: #fff;
+      padding: 10px;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .code-mapping-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 5px;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+    }
+    .code-mapping-item input {
+      flex: 1;
+      padding: 5px;
+      border: 1px solid #999;
+      background-color: #fff;
+    }
+    .code-mapping-item button {
+      padding: 5px 10px;
+      background-color: #C0C0C0;
+      border: 1px solid #999;
+      cursor: pointer;
+    }
+    .add-code-button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background-color: #C0C0C0;
+      border: 1px solid #999;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="margin-bottom: 20px;">
+      <button class="back-button" onclick="location.href='templates.html'">戻る</button>
+    </div>
+
+    <h1 style="margin-bottom: 30px;">書式設定</h1>
+
+    <div class="card">
+      
+      <!-- 当日/翌日フラグ設定 -->
+      <div class="settings-section">
+        <div class="section-title">当日/翌日フラグ設定</div>
+        
+        <div class="setting-item">
+          <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="checkbox" id="enableDayFlag" style="width:20px; height:20px; margin-right:10px;">
+            当日/翌日フラグを有効にする
+          </label>
+        </div>
+
+        <div id="dayFlagSettings" style="margin-left: 30px; opacity: 0.5; pointer-events: none;">
+          <div class="setting-item">
+            <span class="setting-label">当日と判定する値</span>
+            <input type="text" id="todayValue" placeholder="例: 0, 当, 当日" style="background-color: #fff;">
+            <div class="help-text">複数指定する場合はカンマ(,)で区切ってください</div>
+          </div>
+
+          <div class="setting-item">
+            <span class="setting-label">翌日と判定する値</span>
+            <input type="text" id="nextDayValue" placeholder="例: 1, 翌, 翌日" style="background-color: #fff;">
+            <div class="help-text">複数指定する場合はカンマ(,)で区切ってください</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 年月日形式設定 -->
+      <div class="settings-section">
+        <div class="section-title">年月日の形式設定</div>
+        
+        <div class="setting-item">
+          <span class="setting-label">入力データの年月日形式</span>
+          <input type="text" id="dateFormat" placeholder="例: yyyymmdd, yyyy-mm-dd, yy/mm/dd" style="background-color: #fff;">
+          <div class="help-text">
+            y:年、m:月、d:日を使って形式を指定してください<br>
+            ハイフン(-)やスラッシュ(/)などの区切り文字も含めて入力できます
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <span class="setting-label">出力形式</span>
+          <div class="radio-group" style="margin-top: 10px;">
+            <label style="display: inline-flex; align-items: center; margin-right: 30px; cursor: pointer;">
+              <input type="radio" name="dateOutputFormat" value="yyyymmdd" checked style="width: 18px; height: 18px; margin-right: 8px;">
+              yyyymmdd（8桁：西暦4桁）
+            </label>
+            <label style="display: inline-flex; align-items: center; cursor: pointer;">
+              <input type="radio" name="dateOutputFormat" value="yymmdd" style="width: 18px; height: 18px; margin-right: 8px;">
+              yymmdd（6桁：西暦2桁）
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 時分秒形式設定 -->
+      <div class="settings-section">
+        <div class="section-title">時分秒の形式設定</div>
+        
+        <div class="setting-item">
+          <span class="setting-label">入力データの時分秒形式</span>
+          <input type="text" id="timeFormat" placeholder="例: hhmmss, hh:mm:ss, hhmm" style="background-color: #fff;">
+          <div class="help-text">
+            h:時、m:分、s:秒を使って形式を指定してください<br>
+            コロン(:)などの区切り文字も含めて入力できます<br>
+          </div>
+        </div>
+      </div>
+
+      <!-- 区分コード設定 -->
+      <div class="settings-section">
+        <div class="section-title">区分コード設定</div>
+        
+        <div class="setting-item">
+          <span class="setting-label">区分1のコード定義</span>
+          <div class="code-mapping-list" id="class1CodeList">
+            <!-- 動的に追加 -->
+          </div>
+          <button class="add-code-button" onclick="addCodeMapping('class1')">＋ コードを追加</button>
+        </div>
+
+        <div class="setting-item">
+          <span class="setting-label">区分2のコード定義</span>
+          <div class="code-mapping-list" id="class2CodeList">
+            <!-- 動的に追加 -->
+          </div>
+          <button class="add-code-button" onclick="addCodeMapping('class2')">＋ コードを追加</button>
+        </div>
+      </div>
+
+      <!-- 保存・キャンセルボタン -->
+      <div style="text-align: right; margin-top: 30px;">
+        <button id="btnSave" class="btn-gray" style="margin-right: 10px; font-weight:bold; padding: 12px 30px;">保存</button>
+        <button class="btn-gray" onclick="location.href='templates.html'" style="padding: 12px 30px;">キャンセル</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // 設定データを保持するグローバル変数
+    let formatSettings = {
+      dayFlag: {
+        enabled: false,
+        todayValues: [],
+        nextDayValues: []
+      },
+      dateFormat: {
+        input: 'yyyymmdd',
+        output: 'yyyymmdd'
+      },
+      timeFormat: {
+        input: 'hhmmss',
+        output: 'hhmm'
+      },
+      class1Codes: [],
+      class2Codes: []
+    };
+
+    // ページ読み込み時に既存設定をロード
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadSettings();
+      initEventListeners();
+    });
+
+    // 設定を読み込み
+    async function loadSettings() {
+      const saved = await window.api.getFormatSettings();
+      if (saved) {
+        formatSettings = saved;
+        applySettingsToUI();
+      } else {
+        // デフォルト値でコードマッピングを初期化
+        addCodeMapping('class1');
+        addCodeMapping('class2');
+      }
+    }
+
+    // UIに設定を反映
+    function applySettingsToUI() {
+      // 当日/翌日フラグ
+      document.getElementById('enableDayFlag').checked = formatSettings.dayFlag.enabled;
+      document.getElementById('todayValue').value = formatSettings.dayFlag.todayValues.join(', ');
+      document.getElementById('nextDayValue').value = formatSettings.dayFlag.nextDayValues.join(', ');
+      updateDayFlagUI();
+
+      // 年月日形式
+      document.getElementById('dateFormat').value = formatSettings.dateFormat.input;
+      // 出力形式のラジオボタンを設定
+      const outputFormat = formatSettings.dateFormat.output || 'yyyymmdd';
+      document.querySelector(`input[name="dateOutputFormat"][value="${outputFormat}"]`).checked = true;
+
+      // 時分秒形式
+      document.getElementById('timeFormat').value = formatSettings.timeFormat.input;
+
+      // 区分コード
+      formatSettings.class1Codes.forEach(code => {
+        addCodeMapping('class1', code.value, code.label);
+      });
+      formatSettings.class2Codes.forEach(code => {
+        addCodeMapping('class2', code.value, code.label);
+      });
+    }
+
+    // イベントリスナー初期化
+    function initEventListeners() {
+      // 当日/翌日フラグの有効/無効切り替え
+      document.getElementById('enableDayFlag').addEventListener('change', updateDayFlagUI);
+
+      // 保存ボタン
+      document.getElementById('btnSave').addEventListener('click', saveSettings);
+    }
+
+    // 当日/翌日フラグ設定のUI更新
+    function updateDayFlagUI() {
+      const enabled = document.getElementById('enableDayFlag').checked;
+      const settingsArea = document.getElementById('dayFlagSettings');
+      
+      if (enabled) {
+        settingsArea.style.opacity = '1';
+        settingsArea.style.pointerEvents = 'auto';
+      } else {
+        settingsArea.style.opacity = '0.5';
+        settingsArea.style.pointerEvents = 'none';
+      }
+    }
+
+    // コードマッピング追加
+    window.addCodeMapping = function(classType, value = '', label = '') {
+      const listId = classType + 'CodeList';
+      const list = document.getElementById(listId);
+      
+      const item = document.createElement('div');
+      item.className = 'code-mapping-item';
+      item.innerHTML = `
+        <input type="text" placeholder="コード値" value="${value}" class="code-value">
+        <span>→</span>
+        <input type="text" placeholder="表示名/意味" value="${label}" class="code-label">
+        <button onclick="removeCodeMapping(this)">削除</button>
+      `;
+      
+      list.appendChild(item);
+    };
+
+    // コードマッピング削除
+    window.removeCodeMapping = function(btn) {
+      btn.parentElement.remove();
+    };
+
+    // 設定を保存
+    async function saveSettings() {
+      // 当日/翌日フラグ
+      formatSettings.dayFlag.enabled = document.getElementById('enableDayFlag').checked;
+      formatSettings.dayFlag.todayValues = document.getElementById('todayValue').value
+        .split(',')
+        .map(v => v.trim())
+        .filter(v => v);
+      formatSettings.dayFlag.nextDayValues = document.getElementById('nextDayValue').value
+        .split(',')
+        .map(v => v.trim())
+        .filter(v => v);
+
+      // 年月日形式
+      formatSettings.dateFormat.input = document.getElementById('dateFormat').value.trim();
+      formatSettings.dateFormat.output = document.querySelector('input[name="dateOutputFormat"]:checked').value;
+
+      // 時分秒形式
+      formatSettings.timeFormat.input = document.getElementById('timeFormat').value.trim();
+      formatSettings.timeFormat.output = 'hhmm'; // 出力形式は固定
+
+      // 区分コード
+      formatSettings.class1Codes = [];
+      document.querySelectorAll('#class1CodeList .code-mapping-item').forEach(item => {
+        const value = item.querySelector('.code-value').value.trim();
+        const label = item.querySelector('.code-label').value.trim();
+        if (value && label) {
+          formatSettings.class1Codes.push({ value, label });
+        }
+      });
+
+      formatSettings.class2Codes = [];
+      document.querySelectorAll('#class2CodeList .code-mapping-item').forEach(item => {
+        const value = item.querySelector('.code-value').value.trim();
+        const label = item.querySelector('.code-label').value.trim();
+        if (value && label) {
+          formatSettings.class2Codes.push({ value, label });
+        }
+      });
+
+      // バリデーション
+      if (!formatSettings.dateFormat.input) {
+        alert('年月日の入力形式を入力してください');
+        return;
+      }
+      if (!formatSettings.timeFormat.input) {
+        alert('時分秒の入力形式を入力してください');
+        return;
+      }
+
+      // 保存処理
+      const result = await window.api.saveFormatSettings(formatSettings);
+      if (result.success) {
+        alert('書式設定を保存しました');
+        location.href = 'templates.html';
+      } else {
+        alert('保存エラー: ' + result.error);
+      }
+    }
+  </script>
+</body>
+</html>

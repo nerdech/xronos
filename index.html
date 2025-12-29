@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>データ変換</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    
+    <h1>データ変換</h1>
+
+    <div class="card">
+      <div class="form-group">
+        <label>入力ファイルを選択</label>
+        <div class="input-row">
+          <input type="text" id="inputPath" readonly placeholder="ファイルを選択してください">
+          <button id="btnSelectFile" class="btn-gray">選択</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>出力先フォルダを選択</label>
+        <div class="input-row">
+          <input type="text" id="outputPath" readonly placeholder="フォルダを選択してください">
+          <button id="btnSelectFolder" class="btn-gray">選択</button>
+        </div>
+      </div>
+
+      <div class="form-group" style="text-align: right;">
+        <button class="btn-gray" onclick="location.href='templates.html'" style="width: 20%;">テンプレート設定</button>
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+         <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="checkbox" id="checkDeleteManual" style="width:20px; height:20px; margin-right:10px;">
+            変換完了後に元のファイルを削除する
+         </label>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <button id="btnRun" class="run-button" style="width: 200px; padding: 15px; font-weight:bold; font-size:18px;">変換実行</button>
+      </div>
+
+      <div style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 20px; text-align: center;">
+        <p style="margin-bottom: 15px; font-weight: bold; color: #666; font-size: 14px;">各種設定・管理</p>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+           <button class="btn-gray" onclick="location.href='schedule_manage.html'">スケジュール確認</button>
+           <button class="btn-gray" onclick="location.href='schedule.html'">自動スケジュール設定</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const btnSelectFile = document.getElementById('btnSelectFile');
+    const btnSelectFolder = document.getElementById('btnSelectFolder');
+    const btnRun = document.getElementById('btnRun');
+    const inputPath = document.getElementById('inputPath');
+    const outputPath = document.getElementById('outputPath');
+
+    btnSelectFile.addEventListener('click', async () => {
+      const path = await window.api.selectFile();
+      if (path) inputPath.value = path;
+    });
+
+    btnSelectFolder.addEventListener('click', async () => {
+      const path = await window.api.selectFolder();
+      if (path) outputPath.value = path;
+    });
+
+    btnRun.addEventListener('click', async () => {
+      if(!inputPath.value || !outputPath.value) {
+        alert("入力ファイルと出力先を選択してください。");
+        return;
+      }
+      
+      // 最初のテンプレートを使用（固定）
+      const templates = await window.api.getTemplates();
+      if (templates.length === 0) {
+        alert("テンプレートが設定されていません。テンプレート設定画面から設定してください。");
+        return;
+      }
+      const templateId = templates[0].id;
+
+      const deleteAfter = document.getElementById('checkDeleteManual').checked;
+
+      const result = await window.api.runConversion({
+        inputFile: inputPath.value,
+        outputFolder: outputPath.value,
+        templateId: templateId,
+        options: {
+          deleteAfter: deleteAfter,
+          moveFolder: null
+        }
+      });
+
+      if(result.success) {
+        // ▼▼▼ 修正：結果画面へ遷移するように戻しました ▼▼▼
+        localStorage.setItem('conversionPreview', result.preview);
+        localStorage.setItem('conversionPath', result.path); // パスも保存
+        window.location.href = 'result.html';
+      } else {
+        alert("エラーが発生しました: " + result.error);
+      }
+    });
+  </script>
+</body>
+</html>

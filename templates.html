@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テンプレート設定</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* この画面固有の追加スタイル */
+    .meaning-select {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #333;
+      background-color: #fff;
+      font-size: 12px;
+    }
+    .preview-input-group {
+      flex: 1;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    /* 右側パネルのラベル幅調整 */
+    .right-preview .preview-label {
+      width: 80px; 
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="margin-bottom: 20px;">
+      <button class="back-button" onclick="location.href='index.html'">戻る</button>
+    </div>
+
+    <h1 style="margin-bottom: 30px;">テンプレート管理画面</h1>
+
+    <div class="main-card">
+      
+      <div class="top-area">
+        <div class="left-controls">
+          <div class="control-row">
+            <button id="btnToggleMode" class="btn-action" style="flex:1;">ファイルタイプ選択</button>
+            <button id="btnLoadFile" class="btn-action" style="flex:1;">外部ファイル読込</button>
+          </div>
+          <div class="control-row" style="margin-top: 10px;">
+            <button class="btn-action" style="flex:1;" onclick="location.href='format_settings.html'">書式設定</button>
+          </div>
+          <div id="modeLabel" style="font-size:12px; color:#666; margin-top:5px; text-align:right;">現在の設定: 固定長(TXT)</div>
+        </div>
+
+        <div class="right-preview">
+          <div class="preview-row">
+            <span class="preview-label">社員ID</span>
+            <div id="target_header_id" class="preview-box" data-target="header_id"></div>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">年月日</span>
+            <div id="target_header_date" class="preview-box" data-target="header_date"></div>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">時分秒</span>
+            <div id="target_header_time" class="preview-box" data-target="header_time"></div>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">区分1</span>
+            <div class="preview-input-group">
+              <div id="target_header_class1" class="preview-box" data-target="header_class1"></div>
+              <select id="select_header_class1" class="meaning-select">
+                <option value="">意味選択▼</option>
+              </select>
+            </div>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">区分2</span>
+            <div class="preview-input-group">
+              <div id="target_header_class2" class="preview-box" data-target="header_class2"></div>
+              <select id="select_header_class2" class="meaning-select">
+                <option value="">意味選択▼</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-area">
+        
+        <div class="grid-left">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%;">No</th>
+                <th style="width:20%;">文字数</th>
+                <th style="width:30%;">紐付け先</th>
+                <th id="thPreview" style="width:40%; display:none;">プレビュー</th>
+              </tr>
+            </thead>
+            <tbody id="sourceBody">
+              </tbody>
+          </table>
+          
+          <div id="rowAddControls" style="margin-top:10px; text-align:center;">
+             <button class="btn-action" onclick="addRows(5)">＋ 行を追加</button>
+          </div>
+        </div>
+
+        <div class="grid-right">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%;">No</th>
+                <th style="width:50%;">項目</th>
+                <th style="width:40%;">当/翌</th> </tr>
+            </thead>
+            <tbody id="destBody">
+              </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="bottom-area">
+        <button id="btnApply" class="btn-apply">適用</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- グローバル変数 ---
+    let currentMode = 'fixed'; 
+    let isFileLoaded = false;  
+    
+    let sourceData = [];     // { no, charCount, preview, linkedToName }
+    
+    // メイン項目の紐付け { clock_in: sourceNo, clock_in_next: sourceNo, ... }
+    let mappings = {};       
+    
+    // ヘッダー項目の紐付け { header_id: sourceNo, header_class1: sourceNo, ... }
+    let headerMappings = {}; 
+    
+    let currentTemplateId = null;
+
+    // 出力項目定義 (画像の通りに変更)
+    const outputItems = [
+      { no: 1, key: 'clock_in',   label: '出勤' },
+      { no: 2, key: 'break1_in',  label: '休憩1(入)' },
+      { no: 3, key: 'break1_out', label: '休憩1(出)' },
+      { no: 4, key: 'break2_in',  label: '休憩2(入)' },
+      { no: 5, key: 'break2_out', label: '休憩2(出)' },
+      { no: 6, key: 'break3_in',  label: '休憩3(入)' },
+      { no: 7, key: 'break3_out', label: '休憩3(出)' },
+      { no: 8, key: 'clock_out',  label: '退勤' }
+    ];
+
+    // ヘッダー項目のIDリスト
+    const headerTargets = [
+      'header_id', 'header_date', 'header_time', 'header_class2', 'header_class1'
+    ];
+
+    // --- 書式設定の読み込みと区分コードのプルダウンへの反映 ---
+    async function loadFormatSettings() {
+      try {
+        const formatSettings = await window.api.getFormatSettings();
+        if (!formatSettings) return;
+
+        // 区分1のプルダウンを更新
+        const select1 = document.getElementById('select_header_class1');
+        select1.innerHTML = '<option value="">意味選択▼</option>';
+        if (formatSettings.class1Codes && formatSettings.class1Codes.length > 0) {
+          formatSettings.class1Codes.forEach(code => {
+            const option = document.createElement('option');
+            option.value = code.value;
+            option.text = code.label;
+            select1.add(option);
+          });
+        }
+
+        // 区分2のプルダウンを更新
+        const select2 = document.getElementById('select_header_class2');
+        select2.innerHTML = '<option value="">意味選択▼</option>';
+        if (formatSettings.class2Codes && formatSettings.class2Codes.length > 0) {
+          formatSettings.class2Codes.forEach(code => {
+            const option = document.createElement('option');
+            option.value = code.value;
+            option.text = code.label;
+            select2.add(option);
+          });
+        }
+      } catch (e) {
+        console.error('書式設定の読み込みエラー:', e);
+      }
+    }
+
+    // --- 初期化 ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const editId = params.get('id');
+      
+      initRightGrid();
+      initHeaderDropZones(); // ヘッダー部分のドラッグ＆ドロップ初期化
+
+      // 書式設定から区分コードを読み込んでプルダウンに反映
+      await loadFormatSettings();
+
+      // テンプレートが存在すればそれをロード、なければ新規作成
+      const templates = await window.api.getTemplates();
+      if (templates.length > 0) {
+        // 最初のテンプレートを自動的にロード（一つのみ運用）
+        currentTemplateId = templates[0].id;
+        loadTemplate(templates[0]);
+      } else {
+        // 新規時は固定長モード、行追加済みで開始
+        addRows(10);
+        updateUIState();
+      }
+    });
+
+    // --- UI操作 ---
+
+    // モード切替
+    document.getElementById('btnToggleMode').addEventListener('click', () => {
+      if(sourceData.some(d => d.linkedToName || d.preview)) {
+        if(!confirm("ファイルタイプを変更すると現在の設定がリセットされますがよろしいですか？")) return;
+      }
+      
+      currentMode = (currentMode === 'csv') ? 'fixed' : 'csv';
+      resetData();
+      
+      if(currentMode === 'fixed') {
+        addRows(10);
+      } else {
+        addRows(5);
+      }
+      updateUIState();
+    });
+
+    function updateUIState() {
+      const btnMode = document.getElementById('btnToggleMode');
+      const btnLoad = document.getElementById('btnLoadFile');
+      const rowAddCtrl = document.getElementById('rowAddControls');
+      const modeLabel = document.getElementById('modeLabel');
+      const thPreview = document.getElementById('thPreview');
+
+      if (currentMode === 'csv') {
+        btnMode.textContent = "ファイルタイプ: CSV";
+        modeLabel.textContent = "現在の設定: CSV";
+        btnLoad.disabled = false; 
+        
+        thPreview.style.display = isFileLoaded ? '' : 'none';
+        rowAddCtrl.style.display = isFileLoaded ? 'none' : 'block';
+
+      } else {
+        btnMode.textContent = "ファイルタイプ: 固定長(TXT)";
+        modeLabel.textContent = "現在の設定: 固定長(TXT)";
+        btnLoad.disabled = false; 
+        
+        thPreview.style.display = isFileLoaded ? '' : 'none';
+        rowAddCtrl.style.display = 'block'; 
+      }
+      
+      renderLeftGrid();
+      updateAllPreviews(); // 全プレビュー更新
+    }
+
+    // 外部ファイル読込
+    document.getElementById('btnLoadFile').addEventListener('click', async () => {
+      const path = await window.api.selectFile();
+      if(!path) return;
+
+      const rows = await window.api.readPreview(path);
+      if(!rows || rows.length === 0) return;
+
+      const delimiter = rows[0].includes('\t') ? '\t' : ',';
+      const cols = rows[0].split(delimiter);
+
+      sourceData = cols.map((val, idx) => ({
+        no: idx + 1,
+        charCount: val.length, 
+        preview: val,
+        linkedToName: ''
+      }));
+
+      isFileLoaded = true; 
+      updateUIState();     
+    });
+
+    window.addRows = function(count) {
+      const startNo = sourceData.length + 1;
+      for(let i=0; i<count; i++) {
+        sourceData.push({
+          no: startNo + i,
+          charCount: 0, 
+          preview: '', 
+          linkedToName: ''
+        });
+      }
+      renderLeftGrid();
+    }
+
+    function resetData() {
+      sourceData = [];
+      mappings = {};
+      headerMappings = {};
+      isFileLoaded = false;
+      
+      initRightGrid();
+      
+      // ヘッダー表示リセット
+      headerTargets.forEach(key => {
+        const el = document.getElementById(`target_${key}`);
+        if(el) {
+          el.textContent = "";
+          el.classList.remove('mapped-cell');
+        }
+      });
+      // プルダウンリセット
+      document.getElementById('select_header_class1').value = "";
+      document.getElementById('select_header_class2').value = "";
+    }
+
+    // --- 右側グリッド描画 ---
+
+    function initRightGrid() {
+      const tbody = document.getElementById('destBody');
+      tbody.innerHTML = "";
+      outputItems.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'dest-row';
+        
+        // 3列構成: No, 項目, 当/翌
+        tr.innerHTML = `
+          <td>${item.no}</td>
+          <td>${item.label}</td>
+          <td class="drop-zone-next" data-key="${item.key}_next"></td>
+        `;
+        
+        // --- メイン項目(真ん中のセル)へのドロップ ---
+        // 項目名セル自体をドロップターゲットにする（あるいは行全体）
+        // ここでは、操作性を考慮して「項目名セル」をターゲットにします
+        const mainCell = tr.cells[1];
+        setupDropZone(mainCell, (srcNo) => {
+          linkItem(srcNo, item.key, item.label);
+        });
+
+        // --- 当/翌カラムへのドロップ ---
+        const nextCell = tr.cells[2];
+        setupDropZone(nextCell, (srcNo) => {
+          linkItem(srcNo, `${item.key}_next`, `${item.label}(当/翌)`);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ドロップゾーン設定用ヘルパー
+    function setupDropZone(element, callback) {
+      element.addEventListener('dragover', e => {
+        e.preventDefault();
+        element.classList.add('drop-target-active');
+      });
+      element.addEventListener('dragleave', () => {
+        element.classList.remove('drop-target-active');
+      });
+      element.addEventListener('drop', e => {
+        e.preventDefault();
+        element.classList.remove('drop-target-active');
+        const srcNo = e.dataTransfer.getData('sourceNo');
+        if(srcNo) callback(parseInt(srcNo));
+      });
+    }
+
+    // --- 左側グリッド描画 ---
+
+    function renderLeftGrid() {
+      const tbody = document.getElementById('sourceBody');
+      tbody.innerHTML = "";
+      const previewDisplay = isFileLoaded ? '' : 'none';
+
+      sourceData.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'source-row';
+        tr.draggable = true;
+        
+        const isDisabled = (currentMode === 'csv') ? 'disabled' : '';
+        const charCountHtml = `<input type="number" value="${row.charCount}" ${isDisabled} onchange="updateCharCount(${index}, this.value)">`;
+
+        tr.innerHTML = `
+          <td>${row.no}</td>
+          <td>${charCountHtml}</td>
+          <td class="${row.linkedToName ? 'mapped-cell' : ''}">${row.linkedToName || ''}</td>
+          <td style="${previewDisplay}">${row.preview}</td>
+        `;
+
+        tr.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('sourceNo', row.no);
+          e.dataTransfer.setData('previewText', row.preview);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.updateCharCount = function(index, val) {
+      sourceData[index].charCount = parseInt(val) || 0;
+    }
+
+    // --- 紐付け処理 ---
+
+    function linkItem(sourceNo, targetKey, targetLabel) {
+      const srcIdx = sourceData.findIndex(d => d.no === sourceNo);
+      if(srcIdx === -1) return;
+      
+      // 左側グリッドの表示更新
+      sourceData[srcIdx].linkedToName = targetLabel;
+      
+      // 保存用マッピング更新 (ヘッダーかボディかで格納先を分ける必要はないが、変数管理上分けている場合は注意)
+      // ここでは、targetKeyが header_ で始まるなら headerMappings, それ以外は mappings に入れる
+      if (targetKey.startsWith('header_')) {
+        headerMappings[targetKey] = sourceNo;
+      } else {
+        mappings[targetKey] = sourceNo;
+      }
+
+      renderLeftGrid();
+      updateAllPreviews(); // 右側の表示も更新
+    }
+
+    // --- 右側表示更新（ヘッダー＆ボディ） ---
+    
+    function initHeaderDropZones() {
+      headerTargets.forEach(key => {
+        const el = document.getElementById(`target_${key}`);
+        if(el) {
+          setupDropZone(el, (srcNo) => {
+            // ヘッダー項目のラベル取得（簡易的にHTMLから探すか、固定値）
+            // ここでは簡易的にキー名をラベル代わりに
+            linkItem(srcNo, key, "ヘッダー項目"); 
+          });
+        }
+      });
+    }
+
+    function updateAllPreviews() {
+      // 1. ヘッダー項目の更新
+      headerTargets.forEach(key => {
+        const el = document.getElementById(`target_${key}`);
+        if(!el) return;
+        
+        const srcNo = headerMappings[key];
+        if(srcNo) {
+          const srcRow = sourceData.find(d => d.no === srcNo);
+          const text = (isFileLoaded && srcRow) ? srcRow.preview : `(No.${srcNo})`;
+          el.textContent = text;
+          el.classList.add('mapped-cell');
+        } else {
+          el.textContent = "";
+          el.classList.remove('mapped-cell');
+        }
+      });
+
+      // 2. グリッド内（当/翌カラムなど）の更新
+      // （※現在の実装ではグリッド内のセルに文字を表示する機能はないが、
+      //  紐付け済みであることを色で示すためにクラスを付与する）
+      const tbody = document.getElementById('destBody');
+      Array.from(tbody.rows).forEach(tr => {
+        const mainCell = tr.cells[1]; // 項目名
+        const nextCell = tr.cells[2]; // 当/翌
+        
+        // 行番号からキーを特定
+        const item = outputItems.find(i => i.no == tr.cells[0].textContent);
+        if(!item) return;
+
+        // メイン項目
+        if(mappings[item.key]) {
+           mainCell.classList.add('mapped-cell');
+           // 紐付け番号を表示したい場合はここに追記
+        } else {
+           mainCell.classList.remove('mapped-cell');
+        }
+
+        // 当/翌項目
+        if(mappings[`${item.key}_next`]) {
+           nextCell.textContent = `(No.${mappings[`${item.key}_next`]})`; // 番号を表示してみる
+           nextCell.classList.add('mapped-cell');
+        } else {
+           nextCell.textContent = "";
+           nextCell.classList.remove('mapped-cell');
+        }
+      });
+    }
+
+    // --- 適用（保存） ---
+    document.getElementById('btnApply').addEventListener('click', async () => {
+      // テンプレート名は固定（一つのみ運用のため）
+      const name = "デフォルトテンプレート";
+
+      // グリッド部分のマッピングデータ構築
+      const mappingsArray = [];
+      outputItems.forEach(item => {
+        // メイン項目
+        if(mappings[item.key]) {
+          mappingsArray.push({
+            targetKey: item.key,
+            sourceNo: mappings[item.key],
+            setting: sourceData.find(d => d.no === mappings[item.key])
+          });
+        }
+        // 当/翌項目
+        const nextKey = `${item.key}_next`;
+        if(mappings[nextKey]) {
+          mappingsArray.push({
+            targetKey: nextKey,
+            sourceNo: mappings[nextKey],
+            setting: sourceData.find(d => d.no === mappings[nextKey])
+          });
+        }
+      });
+
+      // ヘッダー部分のマッピングデータ
+      const headerData = {};
+      headerTargets.forEach(key => {
+        headerData[key] = headerMappings[key] || null;
+      });
+      
+      // プルダウンの値
+      headerData['header_class1_val'] = document.getElementById('select_header_class1').value;
+      headerData['header_class2_val'] = document.getElementById('select_header_class2').value;
+
+      const templateData = {
+        id: currentTemplateId,
+        name: name,
+        mode: currentMode,
+        headerMappings: headerData, // ヘッダー情報はまとめてオブジェクトに
+        mappings: mappingsArray
+      };
+
+      const res = await window.api.saveTemplate(templateData);
+      if(res.success) {
+        alert("テンプレートを保存しました");
+        location.href = 'index.html';
+      } else {
+        alert("エラー: " + res.error);
+      }
+    });
+
+    // --- テンプレート読込 ---
+    function loadTemplate(t) {
+      // テンプレート名の表示は不要（一つのみ運用のため）
+      currentMode = t.mode || 'fixed'; 
+      isFileLoaded = false; 
+      
+      resetData();
+
+      // データ行復元
+      let maxNo = 0;
+      if(t.mappings) {
+        t.mappings.forEach(m => { if(m.sourceNo > maxNo) maxNo = m.sourceNo; });
+      }
+      if(t.headerMappings) {
+        Object.values(t.headerMappings).forEach(no => { if(no > maxNo) maxNo = no; });
+      }
+      sourceData = [];
+      addRows(maxNo > 10 ? maxNo : 10);
+
+      // マッピング復元
+      if(t.mappings) {
+        t.mappings.forEach(m => {
+          mappings[m.targetKey] = m.sourceNo;
+          const srcIdx = sourceData.findIndex(d => d.no === m.sourceNo);
+          if(srcIdx !== -1) {
+            // ラベル復元（簡易）
+            sourceData[srcIdx].linkedToName = "設定済み項目";
+            if(m.setting) sourceData[srcIdx].charCount = m.setting.charCount;
+          }
+        });
+      }
+
+      // ヘッダー復元
+      if(t.headerMappings) {
+        headerTargets.forEach(key => {
+          if(t.headerMappings[key]) {
+            headerMappings[key] = t.headerMappings[key];
+          }
+        });
+        if(t.headerMappings['header_class1_val']) {
+          document.getElementById('select_header_class1').value = t.headerMappings['header_class1_val'];
+        }
+        if(t.headerMappings['header_class2_val']) {
+          document.getElementById('select_header_class2').value = t.headerMappings['header_class2_val'];
+        }
+      }
+
+      updateUIState();
+    }
+  </script>
+</body>
+</html>
