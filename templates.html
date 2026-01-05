@@ -24,6 +24,12 @@
       width: 80px; 
       font-size: 14px;
     }
+    /* 右上ペインの背景色 */
+    .right-preview {
+      background-color: #e8f4f8;
+      padding: 15px;
+      border: 2px solid #b3d9e8;
+    }
   </style>
 </head>
 <body>
@@ -44,6 +50,7 @@
           </div>
           <div class="control-row" style="margin-top: 10px;">
             <button class="btn-action" style="flex:1;" onclick="location.href='format_settings.html'">書式設定</button>
+            <button id="btnResetTemplate" class="btn-action" style="flex:1;">設定リセット</button>
           </div>
           <div id="modeLabel" style="font-size:12px; color:#666; margin-top:5px; text-align:right;">現在の設定: 固定長(TXT)</div>
         </div>
@@ -157,6 +164,15 @@
       'header_id', 'header_date', 'header_time', 'header_class2', 'header_class1'
     ];
 
+    // ヘッダー項目のラベルマッピング
+    const headerLabels = {
+      'header_id': '社員ID',
+      'header_date': '年月日',
+      'header_time': '時分秒',
+      'header_class1': '区分1',
+      'header_class2': '区分2'
+    };
+
     // --- 書式設定の読み込みと区分コードのプルダウンへの反映 ---
     async function loadFormatSettings() {
       try {
@@ -216,6 +232,24 @@
     });
 
     // --- UI操作 ---
+
+    // リセットボタン
+    document.getElementById('btnResetTemplate').addEventListener('click', () => {
+      if(!confirm("現在のテンプレート設定をすべてリセットしますか？\nこの操作は元に戻せません。")) return;
+      
+      // データを完全にリセット
+      resetData();
+      
+      // 行を初期化
+      if(currentMode === 'fixed') {
+        addRows(10);
+      } else {
+        addRows(5);
+      }
+      
+      updateUIState();
+      alert("テンプレート設定をリセットしました");
+    });
 
     // モード切替
     document.getElementById('btnToggleMode').addEventListener('click', () => {
@@ -331,12 +365,19 @@
         tr.innerHTML = `
           <td>${item.no}</td>
           <td>${item.label}</td>
-          <td class="drop-zone-next" data-key="${item.key}_next"></td>
+          <td class="drop-zone-next" data-key="${item.key}_next" style="padding: 5px; position: relative;">
+            <div class="manual-input-mode">
+              <input type="text" class="day-flag-input" data-key="${item.key}_next" 
+                     style="width: 100%; padding: 5px; border: 1px solid #999; background-color: #fff; box-sizing: border-box;">
+            </div>
+            <div class="source-mapping-mode" style="display: none;">
+              <span class="mapping-text" style="color: #333;"></span>
+              <button class="btn-clear-mapping" style="margin-left: 8px; padding: 2px 8px; font-size: 11px; background-color: #C0C0C0; border: 1px solid #999; cursor: pointer;">クリア</button>
+            </div>
+          </td>
         `;
         
         // --- メイン項目(真ん中のセル)へのドロップ ---
-        // 項目名セル自体をドロップターゲットにする（あるいは行全体）
-        // ここでは、操作性を考慮して「項目名セル」をターゲットにします
         const mainCell = tr.cells[1];
         setupDropZone(mainCell, (srcNo) => {
           linkItem(srcNo, item.key, item.label);
@@ -344,8 +385,54 @@
 
         // --- 当/翌カラムへのドロップ ---
         const nextCell = tr.cells[2];
+        const inputElem = nextCell.querySelector('.day-flag-input');
+        const manualMode = nextCell.querySelector('.manual-input-mode');
+        const sourceMode = nextCell.querySelector('.source-mapping-mode');
+        const mappingText = nextCell.querySelector('.mapping-text');
+        const clearBtn = nextCell.querySelector('.btn-clear-mapping');
+        
+        // ドロップゾーン設定
         setupDropZone(nextCell, (srcNo) => {
+          // ドロップされたらソースマッピングモードに切り替え
+          manualMode.style.display = 'none';
+          sourceMode.style.display = 'block';
+          mappingText.textContent = `No.${srcNo}`;
+          nextCell.classList.add('mapped-cell');
           linkItem(srcNo, `${item.key}_next`, `${item.label}(当/翌)`);
+        });
+        
+        // クリアボタンの処理
+        clearBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // 手動入力モードに戻す
+          sourceMode.style.display = 'none';
+          manualMode.style.display = 'block';
+          inputElem.value = '';
+          nextCell.classList.remove('mapped-cell');
+          // マッピングを削除
+          delete mappings[`${item.key}_next`];
+          // 左側グリッドの表示を更新
+          const srcRow = sourceData.find(d => d.linkedToName === `${item.label}(当/翌)`);
+          if(srcRow) {
+            srcRow.linkedToName = '';
+          }
+          renderLeftGrid();
+        });
+        
+        // テキスト入力時の処理
+        inputElem.addEventListener('input', () => {
+          if (inputElem.value) {
+            // 手動入力の場合、マッピングをクリア
+            if(mappings[`${item.key}_next`]) {
+              delete mappings[`${item.key}_next`];
+              // 左側グリッドの表示を更新
+              const srcRow = sourceData.find(d => d.linkedToName === `${item.label}(当/翌)`);
+              if(srcRow) {
+                srcRow.linkedToName = '';
+              }
+              renderLeftGrid();
+            }
+          }
         });
 
         tbody.appendChild(tr);
@@ -432,9 +519,9 @@
         const el = document.getElementById(`target_${key}`);
         if(el) {
           setupDropZone(el, (srcNo) => {
-            // ヘッダー項目のラベル取得（簡易的にHTMLから探すか、固定値）
-            // ここでは簡易的にキー名をラベル代わりに
-            linkItem(srcNo, key, "ヘッダー項目"); 
+            // ヘッダー項目の具体的なラベルを使用
+            const label = headerLabels[key] || key;
+            linkItem(srcNo, key, label); 
           });
         }
       });
@@ -459,8 +546,6 @@
       });
 
       // 2. グリッド内（当/翌カラムなど）の更新
-      // （※現在の実装ではグリッド内のセルに文字を表示する機能はないが、
-      //  紐付け済みであることを色で示すためにクラスを付与する）
       const tbody = document.getElementById('destBody');
       Array.from(tbody.rows).forEach(tr => {
         const mainCell = tr.cells[1]; // 項目名
@@ -473,18 +558,23 @@
         // メイン項目
         if(mappings[item.key]) {
            mainCell.classList.add('mapped-cell');
-           // 紐付け番号を表示したい場合はここに追記
         } else {
            mainCell.classList.remove('mapped-cell');
         }
 
-        // 当/翌項目
-        if(mappings[`${item.key}_next`]) {
-           nextCell.textContent = `(No.${mappings[`${item.key}_next`]})`; // 番号を表示してみる
-           nextCell.classList.add('mapped-cell');
-        } else {
-           nextCell.textContent = "";
-           nextCell.classList.remove('mapped-cell');
+        // 当/翌項目 - 表示モードを更新
+        const manualMode = nextCell.querySelector('.manual-input-mode');
+        const sourceMode = nextCell.querySelector('.source-mapping-mode');
+        const mappingText = nextCell.querySelector('.mapping-text');
+        
+        if(manualMode && sourceMode) {
+          // 元データからの場合
+          if(mappings[`${item.key}_next`]) {
+            manualMode.style.display = 'none';
+            sourceMode.style.display = 'block';
+            if(mappingText) mappingText.textContent = `No.${mappings[`${item.key}_next`]}`;
+            nextCell.classList.add('mapped-cell');
+          }
         }
       });
     }
@@ -496,6 +586,8 @@
 
       // グリッド部分のマッピングデータ構築
       const mappingsArray = [];
+      const dayFlagSettings = {}; // 当/翌フラグの手動設定を保存
+      
       outputItems.forEach(item => {
         // メイン項目
         if(mappings[item.key]) {
@@ -507,12 +599,22 @@
         }
         // 当/翌項目
         const nextKey = `${item.key}_next`;
-        if(mappings[nextKey]) {
+        const inputElem = document.querySelector(`.day-flag-input[data-key="${nextKey}"]`);
+        const manualValue = inputElem ? inputElem.value.trim() : '';
+        
+        // 手動入力値を保存
+        if (manualValue) {
+          dayFlagSettings[nextKey] = { type: 'manual', value: manualValue };
+        } else if (mappings[nextKey]) {
+          // 元データからの場合
+          dayFlagSettings[nextKey] = { type: 'source', sourceNo: mappings[nextKey] };
           mappingsArray.push({
             targetKey: nextKey,
             sourceNo: mappings[nextKey],
             setting: sourceData.find(d => d.no === mappings[nextKey])
           });
+        } else {
+          dayFlagSettings[nextKey] = { type: 'none' };
         }
       });
 
@@ -531,7 +633,8 @@
         name: name,
         mode: currentMode,
         headerMappings: headerData, // ヘッダー情報はまとめてオブジェクトに
-        mappings: mappingsArray
+        mappings: mappingsArray,
+        dayFlagSettings: dayFlagSettings // 当/翌フラグの手動設定
       };
 
       const res = await window.api.saveTemplate(templateData);
@@ -588,6 +691,38 @@
         if(t.headerMappings['header_class2_val']) {
           document.getElementById('select_header_class2').value = t.headerMappings['header_class2_val'];
         }
+      }
+
+      // 当/翌フラグの手動設定を復元
+      if(t.dayFlagSettings) {
+        Object.keys(t.dayFlagSettings).forEach(key => {
+          const nextCell = document.querySelector(`[data-key="${key}"]`).closest('td');
+          const inputElem = nextCell.querySelector('.day-flag-input');
+          const manualMode = nextCell.querySelector('.manual-input-mode');
+          const sourceMode = nextCell.querySelector('.source-mapping-mode');
+          const mappingText = nextCell.querySelector('.mapping-text');
+          const setting = t.dayFlagSettings[key];
+          
+          if (setting) {
+            if (setting.type === 'manual') {
+              // 手動入力値を復元
+              manualMode.style.display = 'block';
+              sourceMode.style.display = 'none';
+              inputElem.value = setting.value || '';
+            } else if (setting.type === 'source' && mappings[key]) {
+              // 元データからの場合
+              manualMode.style.display = 'none';
+              sourceMode.style.display = 'block';
+              mappingText.textContent = `No.${mappings[key]}`;
+              nextCell.classList.add('mapped-cell');
+            } else {
+              // 設定なし
+              manualMode.style.display = 'block';
+              sourceMode.style.display = 'none';
+              inputElem.value = '';
+            }
+          }
+        });
       }
 
       updateUIState();
