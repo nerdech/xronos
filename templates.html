@@ -30,6 +30,38 @@
       padding: 15px;
       border: 2px solid #b3d9e8;
     }
+    /* クリアボタンのスタイル */
+    .cell-with-clear {
+      position: relative;
+      min-height: 30px;
+    }
+    .preview-box.cell-with-clear {
+      position: relative;
+    }
+    .btn-clear-cell {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: hsl(0, 0%, 39%);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+      padding: 0;
+      line-height: 20px;
+      text-align: center;
+    }
+    .btn-clear-cell:hover {
+      background-color: #cc0000;
+    }
+    .mapped-cell .btn-clear-cell {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -58,20 +90,32 @@
         <div class="right-preview">
           <div class="preview-row">
             <span class="preview-label">社員ID</span>
-            <div id="target_header_id" class="preview-box" data-target="header_id"></div>
+            <div id="target_header_id" class="preview-box cell-with-clear" data-target="header_id">
+              <span class="cell-text"></span>
+              <button class="btn-clear-cell" title="クリア">×</button>
+            </div>
           </div>
           <div class="preview-row">
             <span class="preview-label">年月日</span>
-            <div id="target_header_date" class="preview-box" data-target="header_date"></div>
+            <div id="target_header_date" class="preview-box cell-with-clear" data-target="header_date">
+              <span class="cell-text"></span>
+              <button class="btn-clear-cell" title="クリア">×</button>
+            </div>
           </div>
           <div class="preview-row">
             <span class="preview-label">時分秒</span>
-            <div id="target_header_time" class="preview-box" data-target="header_time"></div>
+            <div id="target_header_time" class="preview-box cell-with-clear" data-target="header_time">
+              <span class="cell-text"></span>
+              <button class="btn-clear-cell" title="クリア">×</button>
+            </div>
           </div>
           <div class="preview-row">
             <span class="preview-label">区分1</span>
             <div class="preview-input-group">
-              <div id="target_header_class1" class="preview-box" data-target="header_class1"></div>
+              <div id="target_header_class1" class="preview-box cell-with-clear" data-target="header_class1">
+                <span class="cell-text"></span>
+                <button class="btn-clear-cell" title="クリア">×</button>
+              </div>
               <select id="select_header_class1" class="meaning-select">
                 <option value="">意味選択▼</option>
               </select>
@@ -80,7 +124,10 @@
           <div class="preview-row">
             <span class="preview-label">区分2</span>
             <div class="preview-input-group">
-              <div id="target_header_class2" class="preview-box" data-target="header_class2"></div>
+              <div id="target_header_class2" class="preview-box cell-with-clear" data-target="header_class2">
+                <span class="cell-text"></span>
+                <button class="btn-clear-cell" title="クリア">×</button>
+              </div>
               <select id="select_header_class2" class="meaning-select">
                 <option value="">意味選択▼</option>
               </select>
@@ -343,7 +390,8 @@
       headerTargets.forEach(key => {
         const el = document.getElementById(`target_${key}`);
         if(el) {
-          el.textContent = "";
+          const cellText = el.querySelector('.cell-text');
+          if(cellText) cellText.textContent = "";
           el.classList.remove('mapped-cell');
         }
       });
@@ -364,75 +412,26 @@
         // 3列構成: No, 項目, 当/翌
         tr.innerHTML = `
           <td>${item.no}</td>
-          <td>${item.label}</td>
-          <td class="drop-zone-next" data-key="${item.key}_next" style="padding: 5px; position: relative;">
-            <div class="manual-input-mode">
-              <input type="text" class="day-flag-input" data-key="${item.key}_next" 
-                     style="width: 100%; padding: 5px; border: 1px solid #999; background-color: #fff; box-sizing: border-box;">
-            </div>
-            <div class="source-mapping-mode" style="display: none;">
-              <span class="mapping-text" style="color: #333;"></span>
-              <button class="btn-clear-mapping" style="margin-left: 8px; padding: 2px 8px; font-size: 11px; background-color: #C0C0C0; border: 1px solid #999; cursor: pointer;">クリア</button>
-            </div>
+          <td class="cell-with-clear">
+            <span class="cell-label">${item.label}</span>
+            <button class="btn-clear-cell" title="クリア">×</button>
+          </td>
+          <td class="drop-zone-next cell-with-clear" data-key="${item.key}_next">
+            <span class="cell-text"></span>
+            <button class="btn-clear-cell" title="クリア">×</button>
           </td>
         `;
         
         // --- メイン項目(真ん中のセル)へのドロップ ---
         const mainCell = tr.cells[1];
-        setupDropZone(mainCell, (srcNo) => {
+        setupDropZone(mainCell, item.key, item.label, (srcNo) => {
           linkItem(srcNo, item.key, item.label);
         });
 
         // --- 当/翌カラムへのドロップ ---
         const nextCell = tr.cells[2];
-        const inputElem = nextCell.querySelector('.day-flag-input');
-        const manualMode = nextCell.querySelector('.manual-input-mode');
-        const sourceMode = nextCell.querySelector('.source-mapping-mode');
-        const mappingText = nextCell.querySelector('.mapping-text');
-        const clearBtn = nextCell.querySelector('.btn-clear-mapping');
-        
-        // ドロップゾーン設定
-        setupDropZone(nextCell, (srcNo) => {
-          // ドロップされたらソースマッピングモードに切り替え
-          manualMode.style.display = 'none';
-          sourceMode.style.display = 'block';
-          mappingText.textContent = `No.${srcNo}`;
-          nextCell.classList.add('mapped-cell');
+        setupDropZone(nextCell, `${item.key}_next`, `${item.label}(当/翌)`, (srcNo) => {
           linkItem(srcNo, `${item.key}_next`, `${item.label}(当/翌)`);
-        });
-        
-        // クリアボタンの処理
-        clearBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          // 手動入力モードに戻す
-          sourceMode.style.display = 'none';
-          manualMode.style.display = 'block';
-          inputElem.value = '';
-          nextCell.classList.remove('mapped-cell');
-          // マッピングを削除
-          delete mappings[`${item.key}_next`];
-          // 左側グリッドの表示を更新
-          const srcRow = sourceData.find(d => d.linkedToName === `${item.label}(当/翌)`);
-          if(srcRow) {
-            srcRow.linkedToName = '';
-          }
-          renderLeftGrid();
-        });
-        
-        // テキスト入力時の処理
-        inputElem.addEventListener('input', () => {
-          if (inputElem.value) {
-            // 手動入力の場合、マッピングをクリア
-            if(mappings[`${item.key}_next`]) {
-              delete mappings[`${item.key}_next`];
-              // 左側グリッドの表示を更新
-              const srcRow = sourceData.find(d => d.linkedToName === `${item.label}(当/翌)`);
-              if(srcRow) {
-                srcRow.linkedToName = '';
-              }
-              renderLeftGrid();
-            }
-          }
         });
 
         tbody.appendChild(tr);
@@ -440,7 +439,7 @@
     }
 
     // ドロップゾーン設定用ヘルパー
-    function setupDropZone(element, callback) {
+    function setupDropZone(element, targetKey, targetLabel, callback) {
       element.addEventListener('dragover', e => {
         e.preventDefault();
         element.classList.add('drop-target-active');
@@ -454,6 +453,15 @@
         const srcNo = e.dataTransfer.getData('sourceNo');
         if(srcNo) callback(parseInt(srcNo));
       });
+      
+      // クリアボタンのイベント
+      const clearBtn = element.querySelector('.btn-clear-cell');
+      if(clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          clearMapping(targetKey, targetLabel);
+        });
+      }
     }
 
     // --- 左側グリッド描画 ---
@@ -512,15 +520,33 @@
       updateAllPreviews(); // 右側の表示も更新
     }
 
+    // マッピングをクリアする処理
+    function clearMapping(targetKey, targetLabel) {
+      // マッピングを削除
+      if (targetKey.startsWith('header_')) {
+        delete headerMappings[targetKey];
+      } else {
+        delete mappings[targetKey];
+      }
+      
+      // 左側グリッドの表示を更新
+      const srcRow = sourceData.find(d => d.linkedToName === targetLabel);
+      if(srcRow) {
+        srcRow.linkedToName = '';
+      }
+      
+      renderLeftGrid();
+      updateAllPreviews();
+    }
+
     // --- 右側表示更新（ヘッダー＆ボディ） ---
     
     function initHeaderDropZones() {
       headerTargets.forEach(key => {
         const el = document.getElementById(`target_${key}`);
         if(el) {
-          setupDropZone(el, (srcNo) => {
-            // ヘッダー項目の具体的なラベルを使用
-            const label = headerLabels[key] || key;
+          const label = headerLabels[key] || key;
+          setupDropZone(el, key, label, (srcNo) => {
             linkItem(srcNo, key, label); 
           });
         }
@@ -533,14 +559,15 @@
         const el = document.getElementById(`target_${key}`);
         if(!el) return;
         
+        const cellText = el.querySelector('.cell-text');
         const srcNo = headerMappings[key];
         if(srcNo) {
           const srcRow = sourceData.find(d => d.no === srcNo);
           const text = (isFileLoaded && srcRow) ? srcRow.preview : `(No.${srcNo})`;
-          el.textContent = text;
+          if(cellText) cellText.textContent = text;
           el.classList.add('mapped-cell');
         } else {
-          el.textContent = "";
+          if(cellText) cellText.textContent = "";
           el.classList.remove('mapped-cell');
         }
       });
@@ -562,19 +589,14 @@
            mainCell.classList.remove('mapped-cell');
         }
 
-        // 当/翌項目 - 表示モードを更新
-        const manualMode = nextCell.querySelector('.manual-input-mode');
-        const sourceMode = nextCell.querySelector('.source-mapping-mode');
-        const mappingText = nextCell.querySelector('.mapping-text');
-        
-        if(manualMode && sourceMode) {
-          // 元データからの場合
-          if(mappings[`${item.key}_next`]) {
-            manualMode.style.display = 'none';
-            sourceMode.style.display = 'block';
-            if(mappingText) mappingText.textContent = `No.${mappings[`${item.key}_next`]}`;
-            nextCell.classList.add('mapped-cell');
-          }
+        // 当/翌項目
+        const nextCellText = nextCell.querySelector('.cell-text');
+        if(mappings[`${item.key}_next`]) {
+           if(nextCellText) nextCellText.textContent = `(No.${mappings[`${item.key}_next`]})`;
+           nextCell.classList.add('mapped-cell');
+        } else {
+           if(nextCellText) nextCellText.textContent = "";
+           nextCell.classList.remove('mapped-cell');
         }
       });
     }
@@ -586,7 +608,6 @@
 
       // グリッド部分のマッピングデータ構築
       const mappingsArray = [];
-      const dayFlagSettings = {}; // 当/翌フラグの手動設定を保存
       
       outputItems.forEach(item => {
         // メイン項目
@@ -599,22 +620,12 @@
         }
         // 当/翌項目
         const nextKey = `${item.key}_next`;
-        const inputElem = document.querySelector(`.day-flag-input[data-key="${nextKey}"]`);
-        const manualValue = inputElem ? inputElem.value.trim() : '';
-        
-        // 手動入力値を保存
-        if (manualValue) {
-          dayFlagSettings[nextKey] = { type: 'manual', value: manualValue };
-        } else if (mappings[nextKey]) {
-          // 元データからの場合
-          dayFlagSettings[nextKey] = { type: 'source', sourceNo: mappings[nextKey] };
+        if(mappings[nextKey]) {
           mappingsArray.push({
             targetKey: nextKey,
             sourceNo: mappings[nextKey],
             setting: sourceData.find(d => d.no === mappings[nextKey])
           });
-        } else {
-          dayFlagSettings[nextKey] = { type: 'none' };
         }
       });
 
@@ -633,8 +644,7 @@
         name: name,
         mode: currentMode,
         headerMappings: headerData, // ヘッダー情報はまとめてオブジェクトに
-        mappings: mappingsArray,
-        dayFlagSettings: dayFlagSettings // 当/翌フラグの手動設定
+        mappings: mappingsArray
       };
 
       const res = await window.api.saveTemplate(templateData);
@@ -691,38 +701,6 @@
         if(t.headerMappings['header_class2_val']) {
           document.getElementById('select_header_class2').value = t.headerMappings['header_class2_val'];
         }
-      }
-
-      // 当/翌フラグの手動設定を復元
-      if(t.dayFlagSettings) {
-        Object.keys(t.dayFlagSettings).forEach(key => {
-          const nextCell = document.querySelector(`[data-key="${key}"]`).closest('td');
-          const inputElem = nextCell.querySelector('.day-flag-input');
-          const manualMode = nextCell.querySelector('.manual-input-mode');
-          const sourceMode = nextCell.querySelector('.source-mapping-mode');
-          const mappingText = nextCell.querySelector('.mapping-text');
-          const setting = t.dayFlagSettings[key];
-          
-          if (setting) {
-            if (setting.type === 'manual') {
-              // 手動入力値を復元
-              manualMode.style.display = 'block';
-              sourceMode.style.display = 'none';
-              inputElem.value = setting.value || '';
-            } else if (setting.type === 'source' && mappings[key]) {
-              // 元データからの場合
-              manualMode.style.display = 'none';
-              sourceMode.style.display = 'block';
-              mappingText.textContent = `No.${mappings[key]}`;
-              nextCell.classList.add('mapped-cell');
-            } else {
-              // 設定なし
-              manualMode.style.display = 'block';
-              sourceMode.style.display = 'none';
-              inputElem.value = '';
-            }
-          }
-        });
       }
 
       updateUIState();
