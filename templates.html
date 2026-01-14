@@ -6,13 +6,6 @@
   <link rel="stylesheet" href="styles.css">
   <style>
     /* この画面固有の追加スタイル */
-    .meaning-select {
-      width: 100px;
-      padding: 5px;
-      border: 1px solid #333;
-      background-color: #fff;
-      font-size: 12px;
-    }
     .preview-input-group {
       flex: 1;
       display: flex;
@@ -24,12 +17,7 @@
       width: 80px; 
       font-size: 14px;
     }
-    /* 右上ペインの背景色 */
-    .right-preview {
-      background-color: #e8f4f8;
-      padding: 15px;
-      border: 2px solid #b3d9e8;
-    }
+    /* 右上ペインのスタイルはCSSで管理 */
     /* クリアボタンのスタイル */
     .cell-with-clear {
       position: relative;
@@ -74,108 +62,124 @@
 
     <div class="main-card">
       
-      <div class="top-area">
+      <div class="top-controls">
         <div class="left-controls">
           <div class="control-row">
             <button id="btnToggleMode" class="btn-action" style="flex:1;">ファイルタイプ選択</button>
             <button id="btnLoadFile" class="btn-action" style="flex:1;">外部ファイル読込</button>
           </div>
-          <div class="control-row" style="margin-top: 10px;">
+          <div class="control-row">
             <button class="btn-action" style="flex:1;" onclick="location.href='format_settings.html'">書式設定</button>
             <button id="btnResetTemplate" class="btn-action" style="flex:1;">設定リセット</button>
           </div>
           <div id="modeLabel" style="font-size:12px; color:#666; margin-top:5px; text-align:right;">現在の設定: 固定長(TXT)</div>
         </div>
+        <div class="right-controls">
+          <button id="btnApply" class="btn-apply">適用</button>
+        </div>
+      </div>
 
-        <div class="right-preview">
-          <div class="preview-row">
-            <span class="preview-label">社員ID</span>
+      <div class="content-area">
+        <div class="left-section">
+          <div class="grid-left">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:10%;">No</th>
+                  <th style="width:15%;">文字数</th>
+                  <th style="width:25%;">紐付け先</th>
+                  <th id="thPreview" style="width:50%; display:none;">プレビュー</th>
+                </tr>
+              </thead>
+              <tbody id="sourceBody">
+              </tbody>
+            </table>
+            
+            <div id="rowAddControls" style="margin-top:10px; text-align:center;">
+               <button class="btn-action" onclick="addRows(5)">＋ 行を追加</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-section">
+          <div class="right-preview">
+          <div class="preview-row-vertical">
+            <span class="preview-label-top">社員ID</span>
             <div id="target_header_id" class="preview-box cell-with-clear" data-target="header_id">
               <span class="cell-text"></span>
               <button class="btn-clear-cell" title="クリア">×</button>
             </div>
           </div>
-          <div class="preview-row">
-            <span class="preview-label">年月日</span>
+          <div class="preview-row-vertical">
+            <span class="preview-label-top">年月日</span>
             <div id="target_header_date" class="preview-box cell-with-clear" data-target="header_date">
               <span class="cell-text"></span>
               <button class="btn-clear-cell" title="クリア">×</button>
             </div>
           </div>
-          <div class="preview-row">
-            <span class="preview-label">時分秒</span>
-            <div id="target_header_time" class="preview-box cell-with-clear" data-target="header_time">
-              <span class="cell-text"></span>
-              <button class="btn-clear-cell" title="クリア">×</button>
+          <div class="preview-row-triple">
+            <div class="preview-item">
+              <span class="preview-label-small">時分秒</span>
+              <div id="target_header_time" class="preview-box cell-with-clear" data-target="header_time">
+                <span class="cell-text"></span>
+                <button class="btn-clear-cell" title="クリア">×</button>
+              </div>
             </div>
-          </div>
-          <div class="preview-row">
-            <span class="preview-label">区分1</span>
-            <div class="preview-input-group">
+            <div class="preview-item">
+              <span class="preview-label-small">出退区分</span>
               <div id="target_header_class1" class="preview-box cell-with-clear" data-target="header_class1">
                 <span class="cell-text"></span>
                 <button class="btn-clear-cell" title="クリア">×</button>
               </div>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label-small">意味選択</span>
               <select id="select_header_class1" class="meaning-select">
-                <option value="">意味選択▼</option>
+                <option value="">選択▼</option>
               </select>
             </div>
           </div>
-          <div class="preview-row">
-            <span class="preview-label">区分2</span>
-            <div class="preview-input-group">
-              <div id="target_header_class2" class="preview-box cell-with-clear" data-target="header_class2">
+          <div class="preview-row-vertical">
+            <span class="preview-label-top">事由コード</span>
+            <div style="display: flex; gap: 10px; width: 100%;">
+              <div id="target_header_class2" class="preview-box cell-with-clear" data-target="header_class2" style="flex: 1; min-height: 44px;">
                 <span class="cell-text"></span>
                 <button class="btn-clear-cell" title="クリア">×</button>
               </div>
-              <select id="select_header_class2" class="meaning-select">
+              <select id="select_header_class2" class="meaning-select" style="flex: 1; min-height: 44px;">
                 <option value="">意味選択▼</option>
               </select>
             </div>
           </div>
-        </div>
-      </div>
+          </div>
 
-      <div class="grid-area">
-        
-        <div class="grid-left">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:10%;">No</th>
-                <th style="width:20%;">文字数</th>
-                <th style="width:30%;">紐付け先</th>
-                <th id="thPreview" style="width:40%; display:none;">プレビュー</th>
-              </tr>
-            </thead>
-            <tbody id="sourceBody">
+          <div class="grid-right">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:15%;">No</th>
+                  <th style="width:45%;">項目</th>
+                  <th style="width:40%;">当/翌</th>
+                </tr>
+              </thead>
+              <tbody id="destBody">
               </tbody>
-          </table>
-          
-          <div id="rowAddControls" style="margin-top:10px; text-align:center;">
-             <button class="btn-action" onclick="addRows(5)">＋ 行を追加</button>
+            </table>
           </div>
         </div>
-
-        <div class="grid-right">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:10%;">No</th>
-                <th style="width:50%;">項目</th>
-                <th style="width:40%;">当/翌</th> </tr>
-            </thead>
-            <tbody id="destBody">
-              </tbody>
-          </table>
-        </div>
-
       </div>
 
-      <div class="bottom-area">
-        <button id="btnApply" class="btn-apply">適用</button>
-      </div>
+    </div>
+  </div>
 
+  <!-- tmrcd.txtプレビューフローティングウィンドウ -->
+  <div id="tmrcdPreviewFloat" class="tmrcd-preview-float">
+    <div class="tmrcd-preview-header">
+      <span class="tmrcd-preview-title">出力データプレビュー</span>
+      <button id="btnRefreshPreview" class="btn-refresh-preview" title="更新">↻</button>
+    </div>
+    <div class="tmrcd-preview-content">
+      <pre id="tmrcdPreviewText">テンプレートを設定してください...</pre>
     </div>
   </div>
 
@@ -183,6 +187,7 @@
     // --- グローバル変数 ---
     let currentMode = 'fixed'; 
     let isFileLoaded = false;  
+    let loadedFilePath = ''; // 読み込んだファイルのパス
     
     let sourceData = [];     // { no, charCount, preview, linkedToName }
     
@@ -270,10 +275,10 @@
       if (templates.length > 0) {
         // 最初のテンプレートを自動的にロード（一つのみ運用）
         currentTemplateId = templates[0].id;
-        loadTemplate(templates[0]);
+        await loadTemplate(templates[0]);
       } else {
         // 新規時は固定長モード、行追加済みで開始
-        addRows(10);
+        addRows(20);
         updateUIState();
       }
     });
@@ -289,9 +294,9 @@
       
       // 行を初期化
       if(currentMode === 'fixed') {
-        addRows(10);
+        addRows(20);
       } else {
-        addRows(5);
+        addRows(10);
       }
       
       updateUIState();
@@ -308,9 +313,9 @@
       resetData();
       
       if(currentMode === 'fixed') {
-        addRows(10);
+        addRows(20);
       } else {
-        addRows(5);
+        addRows(10);
       }
       updateUIState();
     });
@@ -344,26 +349,74 @@
     }
 
     // 外部ファイル読込
+    let loadedFileContent = ''; // 読み込んだファイルの生データを保持
+    let loadedCsvData = []; // CSV全データを保持
+    
     document.getElementById('btnLoadFile').addEventListener('click', async () => {
       const path = await window.api.selectFile();
       if(!path) return;
-
-      const rows = await window.api.readPreview(path);
-      if(!rows || rows.length === 0) return;
-
-      const delimiter = rows[0].includes('\t') ? '\t' : ',';
-      const cols = rows[0].split(delimiter);
-
-      sourceData = cols.map((val, idx) => ({
-        no: idx + 1,
-        charCount: val.length, 
-        preview: val,
-        linkedToName: ''
-      }));
-
-      isFileLoaded = true; 
-      updateUIState();     
+      
+      await loadExternalFile(path);
     });
+    
+    // ファイル読み込み処理（共通化）
+    async function loadExternalFile(path) {
+      if (currentMode === 'csv') {
+        // CSVモード：全データを読み込み
+        const rows = await window.api.readCsvFull(path);
+        if(!rows || rows.length === 0) return;
+        
+        // デリミタを検出
+        const delimiter = rows[0].includes('\t') ? '\t' : ',';
+        
+        // 全行をパース
+        loadedCsvData = rows.map(row => row.split(delimiter));
+        
+        // 列数を取得
+        const colCount = loadedCsvData[0].length;
+        
+        // 各列のデータをsourceDataに設定（プレビューは全行の値を配列で保持）
+        sourceData = [];
+        for (let colIdx = 0; colIdx < colCount; colIdx++) {
+          // この列の全行の値を取得
+          const colValues = loadedCsvData.map(row => row[colIdx] || '');
+          sourceData.push({
+            no: colIdx + 1,
+            charCount: colValues[0] ? colValues[0].length : 0,
+            previewData: colValues,  // 配列で保持
+            preview: colValues[0] || '',  // 従来互換用に1行目の値
+            linkedToName: ''
+          });
+        }
+      } else {
+        // 固定長モード：従来通り
+        const rows = await window.api.readPreview(path);
+        if(!rows || rows.length === 0) return;
+        
+        loadedFileContent = rows[0];
+        loadedCsvData = []; // CSVデータをクリア
+        
+        // 1行目に全文字を表示（残りの未割当文字）
+        sourceData = [{
+          no: 1,
+          charCount: 0,
+          preview: loadedFileContent,
+          linkedToName: ''
+        }];
+      }
+      
+      // ファイルパスを保存
+      loadedFilePath = path;
+      isFileLoaded = true; 
+      updateUIState();
+    }
+    
+    // HTMLエスケープ
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
     window.addRows = function(count) {
       const startNo = sourceData.length + 1;
@@ -383,6 +436,9 @@
       mappings = {};
       headerMappings = {};
       isFileLoaded = false;
+      loadedFileContent = ''; // ファイル内容もリセット
+      loadedFilePath = ''; // ファイルパスもリセット
+      loadedCsvData = []; // CSVデータもリセット
       
       initRightGrid();
       
@@ -479,16 +535,53 @@
         const isDisabled = (currentMode === 'csv') ? 'disabled' : '';
         const charCountHtml = `<input type="number" value="${row.charCount}" ${isDisabled} onchange="updateCharCount(${index}, this.value)">`;
 
+        // CSVモードでpreviewDataがある場合は表形式で表示
+        let previewHtml = '';
+        if (currentMode === 'csv' && row.previewData && row.previewData.length > 0) {
+          previewHtml = '<table class="preview-table"><tr>';
+          row.previewData.forEach((val, idx) => {
+            previewHtml += `<td class="preview-cell">${escapeHtml(val)}</td>`;
+          });
+          previewHtml += '</tr></table>';
+        } else {
+          previewHtml = escapeHtml(row.preview);
+        }
+
         tr.innerHTML = `
           <td>${row.no}</td>
           <td>${charCountHtml}</td>
           <td class="${row.linkedToName ? 'mapped-cell' : ''}">${row.linkedToName || ''}</td>
-          <td style="${previewDisplay}">${row.preview}</td>
+          <td class="preview-td" style="${previewDisplay}">${previewHtml}</td>
         `;
 
         tr.addEventListener('dragstart', e => {
           e.dataTransfer.setData('sourceNo', row.no);
           e.dataTransfer.setData('previewText', row.preview);
+          
+          // カスタムドラッグイメージを作成
+          const dragImage = document.createElement('div');
+          dragImage.className = 'drag-preview';
+          dragImage.innerHTML = `<strong>列 ${row.no}</strong><br>${escapeHtml(row.preview.substring(0, 30))}${row.preview.length > 30 ? '...' : ''}`;
+          dragImage.style.cssText = `
+            position: absolute;
+            top: -1000px;
+            left: -1000px;
+            background: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          `;
+          document.body.appendChild(dragImage);
+          e.dataTransfer.setDragImage(dragImage, 10, 10);
+          
+          // ドラッグ終了後に削除
+          setTimeout(() => dragImage.remove(), 0);
         });
 
         tbody.appendChild(tr);
@@ -496,7 +589,52 @@
     }
 
     window.updateCharCount = function(index, val) {
-      sourceData[index].charCount = parseInt(val) || 0;
+      const newCharCount = parseInt(val) || 0;
+      sourceData[index].charCount = newCharCount;
+      
+      // 固定長モードかつファイル読込済みの場合、行を分割して次の行に残りを表示
+      if (currentMode === 'fixed' && isFileLoaded && loadedFileContent) {
+        updateFixedLengthPreviewsWithSplit();
+        renderLeftGrid();
+      }
+    }
+    
+    // 固定長モードのプレビュー更新処理（文字数入力で分割）
+    function updateFixedLengthPreviewsWithSplit() {
+      if (!loadedFileContent) return;
+      
+      let currentPos = 0;
+      
+      // 文字数が設定されている行のプレビューを更新
+      for (let i = 0; i < sourceData.length; i++) {
+        const row = sourceData[i];
+        const length = row.charCount || 0;
+        
+        if (length > 0 && currentPos < loadedFileContent.length) {
+          // 指定文字数で切り出し
+          row.preview = loadedFileContent.substring(currentPos, currentPos + length);
+          currentPos += length;
+        } else if (length === 0 && currentPos < loadedFileContent.length) {
+          // 文字数が0の行には残りの文字列を表示
+          row.preview = loadedFileContent.substring(currentPos);
+          // この行以降の行を削除
+          sourceData = sourceData.slice(0, i + 1);
+          return;
+        } else {
+          row.preview = '';
+        }
+      }
+      
+      // まだ残りの文字列がある場合、新しい行を追加
+      if (currentPos < loadedFileContent.length) {
+        const newRowNo = sourceData.length + 1;
+        sourceData.push({
+          no: newRowNo,
+          charCount: 0,
+          preview: loadedFileContent.substring(currentPos),
+          linkedToName: ''
+        });
+      }
     }
 
     // --- 紐付け処理 ---
@@ -599,6 +737,9 @@
            nextCell.classList.remove('mapped-cell');
         }
       });
+      
+      // 3. tmrcd.txtプレビューを更新
+      updateTmrcdPreview();
     }
 
     // --- 適用（保存） ---
@@ -629,22 +770,37 @@
         }
       });
 
-      // ヘッダー部分のマッピングデータ
-      const headerData = {};
+      // ヘッダー部分のマッピングデータも mappings に追加
       headerTargets.forEach(key => {
-        headerData[key] = headerMappings[key] || null;
+        if(headerMappings[key]) {
+          mappingsArray.push({
+            targetKey: key,
+            sourceNo: headerMappings[key],
+            setting: sourceData.find(d => d.no === headerMappings[key])
+          });
+        }
       });
-      
-      // プルダウンの値
+
+      // ヘッダー部分の追加情報（プルダウンの値）
+      const headerData = {};
       headerData['header_class1_val'] = document.getElementById('select_header_class1').value;
       headerData['header_class2_val'] = document.getElementById('select_header_class2').value;
+
+      // 全sourceDataの情報も保存（固定長モード用）
+      const allSourceSettings = sourceData.map(s => ({
+        no: s.no,
+        charCount: s.charCount,
+        linkedToName: s.linkedToName
+      }));
 
       const templateData = {
         id: currentTemplateId,
         name: name,
         mode: currentMode,
-        headerMappings: headerData, // ヘッダー情報はまとめてオブジェクトに
-        mappings: mappingsArray
+        headerData: headerData, // プルダウンの選択値
+        mappings: mappingsArray, // すべてのマッピング（ヘッダー含む）
+        sourceSettings: allSourceSettings, // 全入力列定義
+        loadedFilePath: loadedFilePath // 読み込んだファイルパス
       };
 
       const res = await window.api.saveTemplate(templateData);
@@ -657,44 +813,81 @@
     });
 
     // --- テンプレート読込 ---
-    function loadTemplate(t) {
+    async function loadTemplate(t) {
       // テンプレート名の表示は不要（一つのみ運用のため）
       currentMode = t.mode || 'fixed'; 
       isFileLoaded = false; 
       
       resetData();
 
-      // データ行復元
-      let maxNo = 0;
-      if(t.mappings) {
-        t.mappings.forEach(m => { if(m.sourceNo > maxNo) maxNo = m.sourceNo; });
+      // sourceSettings から入力列定義を復元
+      if (t.sourceSettings && t.sourceSettings.length > 0) {
+        sourceData = t.sourceSettings.map(s => ({
+          no: s.no,
+          charCount: s.charCount || 0,
+          preview: '',
+          linkedToName: '' // 一旦空で初期化（後でマッピング復元時に設定）
+        }));
+      } else {
+        // 後方互換性：sourceSettings がない場合は mappings から復元
+        let maxNo = 0;
+        if(t.mappings) {
+          t.mappings.forEach(m => { if(m.sourceNo > maxNo) maxNo = m.sourceNo; });
+        }
+        sourceData = [];
+        addRows(maxNo > 10 ? maxNo : 10);
       }
-      if(t.headerMappings) {
-        Object.values(t.headerMappings).forEach(no => { if(no > maxNo) maxNo = no; });
-      }
-      sourceData = [];
-      addRows(maxNo > 10 ? maxNo : 10);
 
-      // マッピング復元
+      // 保存されたファイルパスがあれば自動的に再読み込み
+      if(t.loadedFilePath) {
+        try {
+          await loadExternalFile(t.loadedFilePath);
+          // ファイル読み込み成功時は明示的にプレビュー列を表示
+          isFileLoaded = true;
+        } catch(e) {
+          console.warn('保存されたファイルの読み込みに失敗しました:', e);
+          // ファイルが見つからない場合は通知
+          alert(`前回読み込んだファイルが見つかりませんでした。\n\nファイルパス: ${t.loadedFilePath}\n\n「外部ファイル読込」ボタンから再度ファイルを選択してください。`);
+          isFileLoaded = false;
+        }
+      }
+
+      // ★ファイル読み込み後にマッピング復元（これにより紐付け先が正しく表示される）
       if(t.mappings) {
         t.mappings.forEach(m => {
-          mappings[m.targetKey] = m.sourceNo;
+          // ヘッダー項目かボディ項目かで分ける
+          if (m.targetKey.startsWith('header_')) {
+            headerMappings[m.targetKey] = m.sourceNo;
+          } else {
+            mappings[m.targetKey] = m.sourceNo;
+          }
+          
+          // 左側グリッドの表示更新
           const srcIdx = sourceData.findIndex(d => d.no === m.sourceNo);
           if(srcIdx !== -1) {
-            // ラベル復元（簡易）
-            sourceData[srcIdx].linkedToName = "設定済み項目";
-            if(m.setting) sourceData[srcIdx].charCount = m.setting.charCount;
+            const label = headerLabels[m.targetKey] || 
+                         outputItems.find(i => i.key === m.targetKey || i.key === m.targetKey.replace('_next', ''))?.label || 
+                         m.targetKey;
+            sourceData[srcIdx].linkedToName = label + (m.targetKey.includes('_next') ? '(当/翌)' : '');
+            if(m.setting && m.setting.charCount) {
+              sourceData[srcIdx].charCount = m.setting.charCount;
+            }
           }
         });
       }
 
-      // ヘッダー復元
+      // ヘッダーのプルダウン値復元
+      if(t.headerData) {
+        if(t.headerData['header_class1_val']) {
+          document.getElementById('select_header_class1').value = t.headerData['header_class1_val'];
+        }
+        if(t.headerData['header_class2_val']) {
+          document.getElementById('select_header_class2').value = t.headerData['header_class2_val'];
+        }
+      }
+      
+      // 後方互換性：旧形式の headerMappings にも対応
       if(t.headerMappings) {
-        headerTargets.forEach(key => {
-          if(t.headerMappings[key]) {
-            headerMappings[key] = t.headerMappings[key];
-          }
-        });
         if(t.headerMappings['header_class1_val']) {
           document.getElementById('select_header_class1').value = t.headerMappings['header_class1_val'];
         }
@@ -704,7 +897,105 @@
       }
 
       updateUIState();
+      updateTmrcdPreview();
     }
+
+    // --- tmrcd.txtプレビュー生成 ---
+    function generateTmrcdLine() {
+      // ヘッダー項目から値を取得
+      const getValue = (key) => {
+        const sourceNo = headerMappings[key];
+        if (sourceNo && sourceData.length > 0) {
+          const src = sourceData.find(d => d.no === sourceNo);
+          if (src && src.previewData && src.previewData.length > 0) {
+            return src.previewData[0] || '';
+          }
+          if (src && src.preview) {
+            return src.preview;
+          }
+        }
+        return '';
+      };
+
+      const employeeId = getValue('header_id').padEnd(10, ' ').substring(0, 10);
+      const date = getValue('header_date').replace(/[^0-9]/g, '').padEnd(8, ' ').substring(0, 8);
+      const time = getValue('header_time').replace(/[^0-9]/g, '').padEnd(6, '0').substring(0, 6);
+      
+      // 出退区分の値（マッピングまたは意味選択から）
+      let class1 = getValue('header_class1');
+      const class1Select = document.getElementById('select_header_class1').value;
+      if (class1Select) {
+        class1 = class1Select;
+      }
+      class1 = (class1 || '').padEnd(2, ' ').substring(0, 2);
+
+      // 事由コードの値
+      let class2 = getValue('header_class2');
+      const class2Select = document.getElementById('select_header_class2').value;
+      if (class2Select) {
+        class2 = class2Select;
+      }
+      class2 = (class2 || '').padEnd(4, ' ').substring(0, 4);
+
+      // tmrcd.txt形式: 社員ID(10) + 年月日(8) + 時分秒(6) + 区分1(2) + 区分2(4) = 30文字
+      return employeeId + date + time + class1 + class2;
+    }
+
+    function updateTmrcdPreview() {
+      const previewEl = document.getElementById('tmrcdPreviewText');
+      
+      if (!isFileLoaded || sourceData.length === 0) {
+        previewEl.textContent = 'テンプレートを設定してください...';
+        return;
+      }
+
+      // 複数行のプレビューを生成（最大5行）
+      const lines = [];
+      const maxRows = Math.min(5, sourceData[0]?.previewData?.length || 1);
+      
+      for (let i = 0; i < maxRows; i++) {
+        const getValue = (key) => {
+          const sourceNo = headerMappings[key];
+          if (sourceNo && sourceData.length > 0) {
+            const src = sourceData.find(d => d.no === sourceNo);
+            if (src) {
+              if (src.previewData && src.previewData.length > i) {
+                return src.previewData[i] || '';
+              }
+              if (src.preview && i === 0) {
+                return src.preview;
+              }
+            }
+          }
+          return '';
+        };
+
+        const employeeId = getValue('header_id').toString().padEnd(10, ' ').substring(0, 10);
+        const date = getValue('header_date').toString().replace(/[^0-9]/g, '').padEnd(8, ' ').substring(0, 8);
+        const time = getValue('header_time').toString().replace(/[^0-9]/g, '').padEnd(6, '0').substring(0, 6);
+        
+        let class1 = getValue('header_class1').toString();
+        const class1Select = document.getElementById('select_header_class1').value;
+        if (class1Select) {
+          class1 = class1Select;
+        }
+        class1 = (class1 || '').padEnd(2, ' ').substring(0, 2);
+
+        let class2 = getValue('header_class2').toString();
+        const class2Select = document.getElementById('select_header_class2').value;
+        if (class2Select) {
+          class2 = class2Select;
+        }
+        class2 = (class2 || '').padEnd(4, ' ').substring(0, 4);
+
+        lines.push(employeeId + date + time + class1 + class2);
+      }
+
+      previewEl.textContent = lines.join('\n');
+    }
+
+    // プレビュー更新ボタンのイベント
+    document.getElementById('btnRefreshPreview').addEventListener('click', updateTmrcdPreview);
   </script>
 </body>
 </html>
